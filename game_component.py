@@ -208,3 +208,33 @@ class Thread:
             screen.blit(text_surface,text_rect)
             y_offset += self.size + 5
 
+class Block:
+    def __init__(self,x,y,size,font,text,image_path,text_color=(255,255,255)):
+        self.original_image = pygame.image.load(image_path).convert_alpha()
+        self.size = size
+        self.image = pygame.transform.scale(self.original_image,size)
+        self.rect = self.image.get_rect(topleft=(x,y))
+        self.text = text
+        self.font = font
+        self.text_color = text_color
+        self.render_text()
+
+    def render_text(self):
+        text_surface = self.font.render(self.text,True,self.text_color)
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        self.combined_image = self.image.copy()
+        self.combined_image.blit(text_surface,text_rect)
+
+    def update_text(self,text):
+        self.text = text
+        self.render_text()
+
+    def update_size(self,size):
+        self.size = size
+        self.image = pygame.transform.scale(self.original_image,size)
+        self.rect = self.image.get_rect(topleft=self.rect.topleft)
+        self.render_text()
+
+    def draw(self,screen):
+        screen.blit(self.combined_image,self.rect)
+
