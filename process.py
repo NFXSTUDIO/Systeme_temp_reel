@@ -69,8 +69,7 @@ def rr_scheduling(processes, quantum=4): # devault value of quantum
     processes.sort(key=lambda x: x.arrival_time)
     index = 0
 
-    while index < n or ready_queue:
-        # Add the processes to the queue
+    while completed != n:
         while index < n and processes[index].arrival_time <= time:
             ready_queue.append(processes[index])
             index += 1
@@ -106,17 +105,18 @@ def rr_scheduling(processes, quantum=4): # devault value of quantum
     performances = total_waiting_time / n
     return results, performances
 
-def rm_scheduling(processes):
+def rm_scheduling(processes): 
     time = 0
     results = []
     ready_queue = []
     total_waiting_time = 0
+    completed = 0
     n = len(processes)
 
     processes.sort(key=lambda x: x.arrival_time)
     index = 0
 
-    while index < n or ready_queue:
+    while completed != n:
         # Add the processes to the queue
         while index < n and processes[index].arrival_time <= time:
             heapq.heappush(ready_queue, (1 / processes[index].period, processes[index]))
@@ -130,11 +130,11 @@ def rm_scheduling(processes):
 
         time += process.remaining_time
         process.remaining_time = 0
-        process.waiting_time = time - process.arrival_time - process.burst_time
+        process.waiting_time = max(0, time - process.arrival_time - process.burst_time)
         process.turnaround_time = time - process.arrival_time
         total_waiting_time += process.waiting_time
         results.append((process.pid, time - process.burst_time, time))
-
+        completed += 1
 
         for p in processes:
             if p.pid == process.pid:
@@ -148,6 +148,47 @@ def rm_scheduling(processes):
     performances = total_waiting_time / n
     return results, performances
 
+def edf_scheduling(processes):
+    time = 0
+    results = []
+    ready_queue = []  # Renommé pour plus de clarté
+    total_waiting_time = 0
+    completed = 0
+    n = len(processes)
+
+    processes.sort(key=lambda x: x.arrival_time)
+    index = 0
+
+    while completed != n:
+        while index < n and processes[index].arrival_time <= time:
+            heapq.heappush(ready_queue, (processes[index].deadline, processes[index]))
+            index += 1
+
+        if not ready_queue:
+            time += 1
+            continue
+
+        _, process = heapq.heappop(ready_queue)
+
+        time += process.remaining_time
+        process.remaining_time = 0
+        process.waiting_time = time - process.arrival_time - process.burst_time 
+        process.turnaround_time = time - process.arrival_time
+        total_waiting_time += process.waiting_time
+        results.append((process.pid, time - process.burst_time, time))
+        completed += 1
+
+        for p in processes:
+            if p.pid == process.pid:
+                p.arrival_time = time
+                p.deadline = time + p.period
+                p.remaining_time = p.burst_time
+                if p.arrival_time <= time:
+                    heapq.heappush(ready_queue, (p.deadline, p))
+                break
+
+    performances = total_waiting_time / n
+    return results, performances
 
 if __name__ == "__main__":
     # test exemple
@@ -171,3 +212,23 @@ if __name__ == "__main__":
     rr_results, rr_avg_wait = rr_scheduling(processes)
     print(rr_results)
     print("Average Waiting Time:", rr_avg_wait)
+    
+    processes1 = [
+        Process(1, 0, 3, 10),
+        Process(2, 2, 4, 15),  
+        Process(3, 4, 5, 20),  
+    ]
+    print("\nRM Scheduling:")
+    rm_results, rm_avg_wait = rm_scheduling(processes1)
+    print(rm_results)
+    print("Average Waiting Time:", rm_avg_wait)
+
+    processes2 = [
+        Process(1, 0, 3, 10, 10),
+        Process(2, 2, 4, 15, 15), # Process 2 arrive plus tard
+        Process(3, 4, 5, 20, 20), # process 3 arrive encore plus tard
+    ]
+    print("\nEDF Scheduling:")
+    edf_results, edf_avg_wait = edf_scheduling(processes2)
+    print(edf_results)
+    print("Average Waiting Time:", edf_avg_wait)
