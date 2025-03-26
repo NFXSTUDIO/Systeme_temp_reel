@@ -1,6 +1,6 @@
 import pygame as pg
 
-class Block(Process):
+class Block():
     def __init__(self,x,y,Block_map,process_name):
         pg.sprite.Sprite.__init__(self)
         self.image = Block_map
@@ -14,4 +14,5 @@ class Block(Process):
         x+= self.move_dir_x
         y+= self.move_dir_y
         self.rect.center = (x,y)
-
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
