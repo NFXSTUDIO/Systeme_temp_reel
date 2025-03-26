@@ -1,0 +1,231 @@
+Index: block.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import pygame as pg\r\n\r\nclass Block(Process):\r\n    def __init__(self,x,y,Block_map,process_name):\r\n        pg.sprite.Sprite.__init__(self)\r\n        self.image = Block_map\r\n        self.rect = self.image.get_rect()\r\n        self.rect.center = (x,y)\r\n        self.move_dir_x = 0\r\n        self.move_dir_y = 0\r\n        self.process = process_name\r\n    def update(self):\r\n        x,y = self.rect.center\r\n        x+= self.move_dir_x\r\n        y+= self.move_dir_y\r\n        self.rect.center = (x,y)\r\n\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/block.py b/block.py
+--- a/block.py	(revision 60b440e238b35e4846a7884a696297fbbab18953)
++++ b/block.py	(date 1742979387090)
+@@ -1,6 +1,6 @@
+ import pygame as pg
+ 
+-class Block(Process):
++class Block():
+     def __init__(self,x,y,Block_map,process_name):
+         pg.sprite.Sprite.__init__(self)
+         self.image = Block_map
+@@ -14,4 +14,5 @@
+         x+= self.move_dir_x
+         y+= self.move_dir_y
+         self.rect.center = (x,y)
+-
++    def draw(self, surface):
++        surface.blit(self.image, self.rect)
+\ No newline at end of file
+Index: test.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/test.py b/test.py
+new file mode 100644
+--- /dev/null	(date 1742979397529)
++++ b/test.py	(date 1742979397529)
+@@ -0,0 +1,80 @@
++import pygame
++import block
++
++pygame.init()
++
++# Définir la taille de la fenêtre
++largeur_fenetre = 800
++hauteur_fenetre = 600
++fenetre = pygame.display.set_mode((largeur_fenetre, hauteur_fenetre))
++pygame.display.set_caption("Mon Interface Graphique")
++
++# Définir des couleurs
++blanc = (255, 255, 255)
++noir = (0, 0, 0)
++rouge = (255, 0, 0)
++vert = (0, 255, 0)
++bleu = (0, 0, 255)
++sprite_sheet = pygame.image.load('img.png').convert()
++
++# Police de caractères
++font = pygame.font.Font(None, 36)
++
++class Bouton:
++    def __init__(self, x, y, largeur, hauteur, texte, couleur_normal, couleur_survol, action=None):
++        self.rect = pygame.Rect(x, y, largeur, hauteur)
++        self.texte = texte
++        self.couleur_normal = couleur_normal
++        self.couleur_survol = couleur_survol
++        self.couleur_actuelle = couleur_normal
++        self.action = action
++        self.font = pygame.font.Font(None, 30)
++        self.texte_surface = self.font.render(self.texte, True, noir)
++        self.texte_rect = self.texte_surface.get_rect(center=self.rect.center)
++
++    def dessiner(self, surface):
++        pygame.draw.rect(surface, self.couleur_actuelle, self.rect)
++        surface.blit(self.texte_surface, self.texte_rect)
++
++    def gerer_evenement(self, event):
++        if event.type == pygame.MOUSEMOTION:
++            if self.rect.collidepoint(event.pos):
++                self.couleur_actuelle = self.couleur_survol
++            else:
++                self.couleur_actuelle = self.couleur_normal
++        elif event.type == pygame.MOUSEBUTTONDOWN:
++            if self.rect.collidepoint(event.pos) and self.action:
++                self.action()
++
++# Fonction à exécuter lorsque le bouton est cliqué
++def action_bouton():
++    print("Bouton cliqué !")
++
++# Création d'une instance du bouton
++bouton1 = Bouton(100, 100, 150, 50, "Cliquez-moi", vert, (0, 150, 0), action_bouton)
++block1 = block.Block(10,10,sprite_sheet,"round-robin")
++def afficher_texte(surface, texte, x, y, couleur):
++    texte_surface = font.render(texte, True, couleur)
++    surface.blit(texte_surface, (x, y))
++
++en_cours = True
++while en_cours:
++    for event in pygame.event.get():
++        if event.type == pygame.QUIT:
++            en_cours = False
++
++        # Gérer les événements des boutons
++        bouton1.gerer_evenement(event)
++
++    # Remplir l'arrière-plan
++    fenetre.fill(blanc)
++
++    # Dessiner les éléments de l'interface
++    bouton1.dessiner(fenetre)
++    block1.draw(fenetre)
++    afficher_texte(fenetre, "Bienvenue dans mon interface !", 50, 50, noir)
++
++    # Mettre à jour l'affichage
++    pygame.display.flip()
++
++pygame.quit()
+\ No newline at end of file
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"618f0c16-c5e1-48b9-ae1e-509c403f88f5\" name=\"Changes\" comment=\"add pygame\">\r\n      <change afterPath=\"$PROJECT_DIR$/block.py\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"FileTemplateManagerImpl\">\r\n    <option name=\"RECENT_TEMPLATES\">\r\n      <list>\r\n        <option value=\"Python Script\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"GitHubPullRequestSearchHistory\"><![CDATA[{\r\n  \"lastFilter\": {\r\n    \"state\": \"OPEN\",\r\n    \"assignee\": \"NFXSTUDIO\"\r\n  }\r\n}]]></component>\r\n  <component name=\"GithubPullRequestsUISettings\"><![CDATA[{\r\n  \"selectedUrlAndAccountId\": {\r\n    \"url\": \"https://github.com/NFXSTUDIO/Systeme_temp_reel\",\r\n    \"accountId\": \"2cbd9472-19ec-438a-8c4a-a6caa5f58057\"\r\n  }\r\n}]]></component>\r\n  <component name=\"ProjectColorInfo\"><![CDATA[{\r\n  \"associatedIndex\": 1\r\n}]]></component>\r\n  <component name=\"ProjectId\" id=\"2uqSjJcl5xrENyG6gXVpSGgKxFi\" />\r\n  <component name=\"ProjectLevelVcsManager\" settingsEditedManually=\"true\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\"><![CDATA[{\r\n  \"keyToString\": {\r\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\r\n    \"git-widget-placeholder\": \"master\",\r\n    \"node.js.detected.package.eslint\": \"true\",\r\n    \"node.js.detected.package.tslint\": \"true\",\r\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\r\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\r\n    \"nodejs_package_manager_path\": \"npm\",\r\n    \"vue.rearranger.settings.migration\": \"true\"\r\n  }\r\n}]]></component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-PY-242.21829.153\" />\r\n        <option value=\"bundled-python-sdk-464836ebc622-b74155a9e76b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.21829.153\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"618f0c16-c5e1-48b9-ae1e-509c403f88f5\" name=\"Changes\" comment=\"\" />\r\n      <created>1742974744646</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1742974744646</updated>\r\n      <workItem from=\"1742974746532\" duration=\"3210000\" />\r\n    </task>\r\n    <task id=\"LOCAL-00001\" summary=\"main\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1742974827674</created>\r\n      <option name=\"number\" value=\"00001\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1742974827675</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00002\" summary=\"main\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1742974924124</created>\r\n      <option name=\"number\" value=\"00002\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1742974924124</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00003\" summary=\"add pygame\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1742975750269</created>\r\n      <option name=\"number\" value=\"00003\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00003\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1742975750269</updated>\r\n    </task>\r\n    <option name=\"localTasksCounter\" value=\"4\" />\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n  <component name=\"VcsManagerConfiguration\">\r\n    <MESSAGE value=\"main\" />\r\n    <MESSAGE value=\"add pygame\" />\r\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"add pygame\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 60b440e238b35e4846a7884a696297fbbab18953)
++++ b/.idea/workspace.xml	(date 1742979387161)
+@@ -4,9 +4,12 @@
+     <option name="autoReloadType" value="SELECTIVE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="618f0c16-c5e1-48b9-ae1e-509c403f88f5" name="Changes" comment="add pygame">
+-      <change afterPath="$PROJECT_DIR$/block.py" afterDir="false" />
++    <list default="true" id="618f0c16-c5e1-48b9-ae1e-509c403f88f5" name="Changes" comment="add block.py">
++      <change afterPath="$PROJECT_DIR$/bouton.py" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/img.png" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/block.py" beforeDir="false" afterPath="$PROJECT_DIR$/block.py" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -46,6 +49,7 @@
+   </component>
+   <component name="PropertiesComponent"><![CDATA[{
+   "keyToString": {
++    "Python.test.executor": "Run",
+     "RunOnceActivity.ShowReadmeOnStart": "true",
+     "git-widget-placeholder": "master",
+     "node.js.detected.package.eslint": "true",
+@@ -72,7 +76,7 @@
+       <option name="number" value="Default" />
+       <option name="presentableId" value="Default" />
+       <updated>1742974744646</updated>
+-      <workItem from="1742974746532" duration="3210000" />
++      <workItem from="1742974746532" duration="4598000" />
+     </task>
+     <task id="LOCAL-00001" summary="main">
+       <option name="closed" value="true" />
+@@ -98,7 +102,15 @@
+       <option name="project" value="LOCAL" />
+       <updated>1742975750269</updated>
+     </task>
+-    <option name="localTasksCounter" value="4" />
++    <task id="LOCAL-00004" summary="add block.py">
++      <option name="closed" value="true" />
++      <created>1742978023112</created>
++      <option name="number" value="00004" />
++      <option name="presentableId" value="LOCAL-00004" />
++      <option name="project" value="LOCAL" />
++      <updated>1742978023112</updated>
++    </task>
++    <option name="localTasksCounter" value="5" />
+     <servers />
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">
+@@ -107,6 +119,10 @@
+   <component name="VcsManagerConfiguration">
+     <MESSAGE value="main" />
+     <MESSAGE value="add pygame" />
+-    <option name="LAST_COMMIT_MESSAGE" value="add pygame" />
++    <MESSAGE value="add block.py" />
++    <option name="LAST_COMMIT_MESSAGE" value="add block.py" />
++  </component>
++  <component name="com.intellij.coverage.CoverageDataManagerImpl">
++    <SUITE FILE_PATH="coverage/Systeme_temp_real$test.coverage" NAME="test Coverage Results" MODIFIED="1742979317809" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+   </component>
+ </project>
+\ No newline at end of file
+Index: bouton.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bouton.py b/bouton.py
+new file mode 100644
+--- /dev/null	(date 1742978290844)
++++ b/bouton.py	(date 1742978290844)
+@@ -0,0 +1,31 @@
++import pygame
++
++class Bouton:
++    def __init__(self, x, y, largeur, hauteur, texte, couleur_normal, couleur_survol, action=None):
++        self.rect = pygame.Rect(x, y, largeur, hauteur)
++        self.texte = texte
++        self.couleur_normal = couleur_normal
++        self.couleur_survol = couleur_survol
++        self.couleur_actuelle = couleur_normal
++        self.action = action
++        self.font = pygame.font.Font(None, 30)
++        self.texte_surface = self.font.render(self.texte, True, noir)
++        self.texte_rect = self.texte_surface.get_rect(center=self.rect.center)
++
++    def dessiner(self, surface):
++        pygame.draw.rect(surface, self.couleur_actuelle, self.rect)
++        surface.blit(self.texte_surface, self.texte_rect)
++
++    def gerer_evenement(self, event):
++        if event.type == pygame.MOUSEMOTION:
++            if self.rect.collidepoint(event.pos):
++                self.couleur_actuelle = self.couleur_survol
++            else:
++                self.couleur_actuelle = self.couleur_normal
++        elif event.type == pygame.MOUSEBUTTONDOWN:
++            if self.rect.collidepoint(event.pos) and self.action:
++                self.action()
++
++# Fonction à exécuter lorsque le bouton est cliqué
++def action_bouton():
++    print("Bouton cliqué !")
+\ No newline at end of file
