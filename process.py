@@ -17,54 +17,61 @@ def fcfs_scheduling(processes):
     time = 0
     results = []
     total_waiting_time = 0
+    start_time = 0
+    
+    processes.sort(key=lambda x: x.arrival_time)
     
     for process in processes:
-        if time < process.arrival_time:
-            time = process.arrival_time  # wait if we have to
-        process.waiting_time = time - process.arrival_time
-        process.turnaround_time = process.waiting_time + process.burst_time
-        total_waiting_time += process.waiting_time
-        results.append((process.pid, time, time + process.burst_time))
-        time += process.burst_time
+        if time >= process.arrival_time:
+            start_time = time
+            while process.remaining_time > 0:
+                time += 1
+                process.remaining_time -= 1
+            if process.remaining_time == 0:
+                process.waiting_time = time - process.arrival_time
+                process.turnaround_time = process.waiting_time + process.burst_time
+                total_waiting_time += process.waiting_time
+                results.append((process.pid, start_time, time))
     
     performances = total_waiting_time / len(processes)
     return results, performances
 
 def sjn_scheduling(processes):
-    processes.sort(key=lambda x: x.arrival_time) 
+    processes.sort(key=lambda x: x.arrival_time)
+    ready_queue = []
     time = 0
     results = []
     index = 0
     total_waiting_time = 0
-    ready_queue = []  # ready_queue initialize
-    n = len(processes)
 
-    while index < n or ready_queue:
-        # Add the processes to the queue
-        while index < n and processes[index].arrival_time <= time:
-            heapq.heappush(ready_queue, (processes[index].burst_time, processes[index]))  # add per burst time
+    while index < len(processes) or ready_queue:
+        while index < len(processes) and processes[index].arrival_time <= time:
+            heapq.heappush(ready_queue, (processes[index].burst_time, processes[index]))
             index += 1
 
         if ready_queue:
-            burst_time, process = heapq.heappop(ready_queue)
+            _, process = heapq.heappop(ready_queue)
             process.waiting_time = time - process.arrival_time
             process.turnaround_time = process.waiting_time + process.burst_time
             total_waiting_time += process.waiting_time
             results.append((process.pid, time, time + process.burst_time))
             time += process.burst_time
-        elif index < n:
-            time = processes[index].arrival_time  # switch to the next process if the ready queue is empty and the process arrive
+        else:
+            time = processes[index].arrival_time
 
-    performances = total_waiting_time / n
+    performances = total_waiting_time / len(processes)
     return results, performances
 
-def rr_scheduling(processes, quantum=4): # devault value of quantum
+def rr_scheduling(processes, quantum=4):
     time = 0
     results = []
     ready_queue = deque()
     total_waiting_time = 0
     completed = 0
     n = len(processes)
+
+    for p in processes:
+        p.remaining_time = p.burst_time
 
     processes.sort(key=lambda x: x.arrival_time)
     index = 0
@@ -79,6 +86,7 @@ def rr_scheduling(processes, quantum=4): # devault value of quantum
             continue
 
         process = ready_queue.popleft()
+        start_time = time
 
         if process.remaining_time <= quantum:
             time += process.remaining_time
@@ -86,67 +94,125 @@ def rr_scheduling(processes, quantum=4): # devault value of quantum
             process.waiting_time = time - process.arrival_time - process.burst_time
             process.turnaround_time = time - process.arrival_time
             total_waiting_time += process.waiting_time
-            results.append((process.pid, time - process.burst_time, time))
+            results.append((process.pid, start_time, time))
             completed += 1
         else:
             time += quantum
             process.remaining_time -= quantum
+            results.append((process.pid, start_time, time))
             ready_queue.append(process)
-
-        if process.remaining_time > 0:
-            if index < n:
-                for p in processes[index:]:
-                    if p.arrival_time <= time and p not in ready_queue and p.remaining_time > 0:
-                        ready_queue.append(p)
-            for p in processes:
-                if p.arrival_time <= time and p not in ready_queue and p.remaining_time > 0:
-                    ready_queue.append(p)
 
     performances = total_waiting_time / n
     return results, performances
 
-def rm_scheduling(processes): 
+def rr_scheduling(processes, quantum=4):
     time = 0
     results = []
-    ready_queue = []
+    ready_queue = deque()
     total_waiting_time = 0
     completed = 0
     n = len(processes)
+
+    for p in processes:
+        p.remaining_time = p.burst_time
 
     processes.sort(key=lambda x: x.arrival_time)
     index = 0
 
     while completed != n:
-        # Add the processes to the queue
         while index < n and processes[index].arrival_time <= time:
-            heapq.heappush(ready_queue, (1 / processes[index].period, processes[index]))
+            ready_queue.append(processes[index])
             index += 1
 
         if not ready_queue:
             time += 1
             continue
 
-        _, process = heapq.heappop(ready_queue)
+        process = ready_queue.popleft()
+        start_time = time
 
-        time += process.remaining_time
-        process.remaining_time = 0
-        process.waiting_time = max(0, time - process.arrival_time - process.burst_time)
-        process.turnaround_time = time - process.arrival_time
-        total_waiting_time += process.waiting_time
-        results.append((process.pid, time - process.burst_time, time))
-        completed += 1
+        if process.remaining_time <= quantum:
+            time += process.remaining_time
+            process.remaining_time = 0
+            process.waiting_time = time - process.arrival_time - process.burst_time
+            process.turnaround_time = time - process.arrival_time
+            total_waiting_time += process.waiting_time
+            results.append((process.pid, start_time, time))                
+            completed += 1
+        else:
+            time += quantum
+            process.remaining_time -= quantum
+            results.append((process.pid, start_time, time))
 
-        for p in processes:
-            if p.pid == process.pid:
-                p.arrival_time = time
-                p.deadline = time + p.period
-                p.remaining_time = p.burst_time
-                if p.arrival_time <= time :
-                  heapq.heappush(ready_queue, (1 / p.period, p))
-                break
+        while index < n and processes[index].arrival_time <= time:
+            if processes[index] not in ready_queue and processes[index].remaining_time > 0:
+                ready_queue.append(processes[index])
+                index += 1
+
+        if process.remaining_time > 0:
+            ready_queue.append(process)
 
     performances = total_waiting_time / n
     return results, performances
+
+
+
+def rm_scheduling(processes): 
+    time = 0
+    results = []
+    ready_queue = []
+    total_waiting_time = 0
+    start_time = 0
+    
+    hyperperiod = max([p.period for p in processes if p.period]) * 2  # simulation jusqu'à une certaine limite
+    processes.sort(key=lambda x: x.period)  # sort per period
+    temp_pid = processes[0].pid
+    temp_st_time = processes[0].arrival_time
+    temp_time = processes[0].arrival_time
+    temp_remaining_time = processes[0].remaining_time
+    # Initialize the ready queue with the process that arrive at time 0
+    for p in processes:
+            if (time - p.arrival_time) % p.period == 0 and time >= p.arrival_time:
+                new_instance = Process(p.pid, time, p.burst_time, p.period)
+                heapq.heappush(ready_queue, (new_instance.period, new_instance))
+    print(ready_queue)
+
+    print("debut traitement : ")
+    while time < hyperperiod:
+        # Ajouter les réapparitions périodiques
+        for p in processes:
+            if (time - p.period) % p.period == 0 and time > p.arrival_time:
+                new_instance = Process(p.pid, time, p.burst_time, p.period)
+                #print("time when the process is created",time)
+                heapq.heappush(ready_queue, (new_instance.period, new_instance))
+        #print(ready_queue)
+        if ready_queue:
+            _, process = heapq.heappop(ready_queue)
+            if process.pid != temp_pid and temp_remaining_time > 0: # if the previous process is not the same as the current one we save it in the results
+                results.append((temp_pid, temp_st_time, temp_time))
+                start_time = 0
+            if start_time == 0:
+                start_time = time
+            time += 1
+            process.remaining_time -= 1
+            temp_remaining_time = process.remaining_time
+
+            if process.remaining_time == 0:
+                process.turnaround_time = time - process.arrival_time
+                process.waiting_time = process.turnaround_time - process.burst_time
+                total_waiting_time += process.waiting_time
+                results.append((process.pid, start_time, time))
+                start_time = 0
+            else:
+                temp_pid = process.pid
+                temp_st_time = start_time
+                temp_time = time
+                heapq.heappush(ready_queue, (process.period, process))
+        else:
+            time += 1
+
+    performances = total_waiting_time / len(processes)
+    return results, time, performances
 
 def edf_scheduling(processes):
     time = 0
@@ -196,7 +262,6 @@ if __name__ == "__main__":
         Process(1, 0, 5),
         Process(2, 1, 3),
         Process(3, 2, 8),
-        Process(4, 3, 6)
     ]
     print("FCFS Scheduling:")
     fcfs_results, fcfs_avg_wait = fcfs_scheduling(processes)
@@ -214,13 +279,14 @@ if __name__ == "__main__":
     print("Average Waiting Time:", rr_avg_wait)
     
     processes1 = [
-        Process(1, 0, 3, 10),
-        Process(2, 2, 4, 15),  
-        Process(3, 4, 5, 20),  
+        Process(1, 0, 1, 4),
+        Process(2, 0, 2, 5),  
+        Process(3, 0, 3, 10),  
     ]
     print("\nRM Scheduling:")
-    rm_results, rm_avg_wait = rm_scheduling(processes1)
+    rm_results, rm_tt_time, rm_avg_wait = rm_scheduling(processes1)
     print(rm_results)
+    print("Time:", rm_tt_time)
     print("Average Waiting Time:", rm_avg_wait)
 
     processes2 = [
