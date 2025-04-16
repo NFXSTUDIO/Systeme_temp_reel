@@ -172,44 +172,46 @@ def rm_scheduling(processes):
 def edf_scheduling(processes):
     time = 0
     results = []
-    ready_queue = []  # Renommé pour plus de clarté
+    ready_queue = []
     total_waiting_time = 0
-    completed = 0
-    n = len(processes)
+    start_time = 0
 
-    processes.sort(key=lambda x: x.arrival_time)
-    index = 0
+    hyperperiod = max([p.deadline for p in processes if p.deadline]) * 2
+    for p in processes:
+        if p.arrival_time == 0:
+            new_instance = Process(p.pid, time, p.burst_time, deadline=p.deadline)
+            heapq.heappush(ready_queue, (new_instance.deadline, new_instance))
 
-    while completed != n:
-        while index < n and processes[index].arrival_time <= time:
-            heapq.heappush(ready_queue, (processes[index].deadline, processes[index]))
-            index += 1
-
-        if not ready_queue:
-            time += 1
-            continue
-
-        _, process = heapq.heappop(ready_queue)
-
-        time += process.remaining_time
-        process.remaining_time = 0
-        process.waiting_time = time - process.arrival_time - process.burst_time 
-        process.turnaround_time = time - process.arrival_time
-        total_waiting_time += process.waiting_time
-        results.append((process.pid, time - process.burst_time, time))
-        completed += 1
-
+    while time < hyperperiod:
         for p in processes:
-            if p.pid == process.pid:
-                p.arrival_time = time
-                p.deadline = time + p.period
-                p.remaining_time = p.burst_time
-                if p.arrival_time <= time:
-                    heapq.heappush(ready_queue, (p.deadline, p))
-                break
+            if time > p.arrival_time and (time - p.arrival_time) % p.period == 0:
+                new_instance = Process(p.pid, time, p.burst_time, deadline=time + p.deadline)
+                heapq.heappush(ready_queue, (new_instance.deadline, new_instance))
 
-    performances = total_waiting_time / n
-    return results, performances
+        # Remove expired processes
+        ready_queue = [(d, p) for d, p in ready_queue if time < p.deadline]
+        heapq.heapify(ready_queue)
+
+        if ready_queue:
+            _, process = heapq.heappop(ready_queue)
+            if start_time == 0:
+                start_time = time
+            time += 1
+            process.remaining_time -= 1
+
+            if process.remaining_time == 0:
+                process.turnaround_time = time - process.arrival_time
+                process.waiting_time = process.turnaround_time - process.burst_time
+                total_waiting_time += process.waiting_time
+                results.append((process.pid, start_time, time))
+                start_time = 0
+            else:
+                heapq.heappush(ready_queue, (process.deadline, process))
+        else:
+            time += 1
+
+    performances = total_waiting_time / len(processes)
+    return results, time, performances
 
 if __name__ == "__main__":
     # test exemple
@@ -245,11 +247,11 @@ if __name__ == "__main__":
     print("Average Waiting Time:", rm_avg_wait)
 
     processes2 = [
-        Process(1, 0, 3, 10, 10),
-        Process(2, 2, 4, 15, 15), # Process 2 arrive plus tard
-        Process(3, 4, 5, 20, 20), # process 3 arrive encore plus tard
+        Process(1, 0, 3, 20, 7),
+        Process(2, 0, 2, 5, 4), 
+        Process(3, 0, 2, 10, 8), 
     ]
     print("\nEDF Scheduling:")
-    edf_results, edf_avg_wait = edf_scheduling(processes2)
+    edf_results, time, edf_avg_wait = edf_scheduling(processes2)
     print(edf_results)
     print("Average Waiting Time:", edf_avg_wait)
