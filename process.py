@@ -34,7 +34,7 @@ def fcfs_scheduling(processes):
                 results.append((process.pid, start_time, time))
     
     performances = total_waiting_time / len(processes)
-    return results, performances
+    return results, time, performances
 
 def sjn_scheduling(processes):
     processes.sort(key=lambda x: x.arrival_time)
@@ -60,50 +60,7 @@ def sjn_scheduling(processes):
             time = processes[index].arrival_time
 
     performances = total_waiting_time / len(processes)
-    return results, performances
-
-def rr_scheduling(processes, quantum=4):
-    time = 0
-    results = []
-    ready_queue = deque()
-    total_waiting_time = 0
-    completed = 0
-    n = len(processes)
-
-    for p in processes:
-        p.remaining_time = p.burst_time
-
-    processes.sort(key=lambda x: x.arrival_time)
-    index = 0
-
-    while completed != n:
-        while index < n and processes[index].arrival_time <= time:
-            ready_queue.append(processes[index])
-            index += 1
-
-        if not ready_queue:
-            time += 1
-            continue
-
-        process = ready_queue.popleft()
-        start_time = time
-
-        if process.remaining_time <= quantum:
-            time += process.remaining_time
-            process.remaining_time = 0
-            process.waiting_time = time - process.arrival_time - process.burst_time
-            process.turnaround_time = time - process.arrival_time
-            total_waiting_time += process.waiting_time
-            results.append((process.pid, start_time, time))
-            completed += 1
-        else:
-            time += quantum
-            process.remaining_time -= quantum
-            results.append((process.pid, start_time, time))
-            ready_queue.append(process)
-
-    performances = total_waiting_time / n
-    return results, performances
+    return results, time, performances
 
 def rr_scheduling(processes, quantum=4):
     time = 0
@@ -153,9 +110,7 @@ def rr_scheduling(processes, quantum=4):
             ready_queue.append(process)
 
     performances = total_waiting_time / n
-    return results, performances
-
-
+    return results, time, performances
 
 def rm_scheduling(processes): 
     time = 0
@@ -264,17 +219,17 @@ if __name__ == "__main__":
         Process(3, 2, 8),
     ]
     print("FCFS Scheduling:")
-    fcfs_results, fcfs_avg_wait = fcfs_scheduling(processes)
+    fcfs_results, time, fcfs_avg_wait = fcfs_scheduling(processes)
     print(fcfs_results)
     print("Average Waiting Time:", fcfs_avg_wait)
 
     print("\nSJN Scheduling:")
-    sjn_results, sjn_avg_wait = sjn_scheduling(processes)
+    sjn_results,time, sjn_avg_wait = sjn_scheduling(processes)
     print(sjn_results)
     print("Average Waiting Time:", sjn_avg_wait)
 
     print("\nRR Scheduling:")
-    rr_results, rr_avg_wait = rr_scheduling(processes)
+    rr_results, time, rr_avg_wait = rr_scheduling(processes)
     print(rr_results)
     print("Average Waiting Time:", rr_avg_wait)
     
