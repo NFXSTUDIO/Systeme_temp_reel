@@ -1,6 +1,8 @@
 import pygame
 import time as t
 import random as rd
+import process as pro
+from process import Process
 
 
 class Button:
@@ -263,7 +265,7 @@ class Thread:
         self.min_arrival_time = 0
         self.max_arrival_time = 30
         self.min_burst_time = 1
-        self.max_burst_time = 15
+        self.max_burst_time = 8
         self.min_period = 0
         self.max_period = 15
         self.difficulty = 1
@@ -272,7 +274,8 @@ class Thread:
         number_of_process = rd.randint(self.min_thread, self.max_thread)
         for i in range(number_of_process):
             burst_time = rd.randint(self.min_burst_time, self.max_burst_time)
-            process = dict(name="L" + str(i), arrival_time=rd.randint(self.min_arrival_time, self.max_arrival_time),
+            process = dict(name="L" + str(i),
+                           arrival_time=rd.randint(self.min_arrival_time, self.max_arrival_time),
                            burst_time=burst_time,
                            period=rd.randint(self.min_period, self.max_period),
                            deadline=2*burst_time )
@@ -302,6 +305,7 @@ class Thread:
 
     def set_difficulty(self, difficulty):
         self.difficulty = difficulty
+        self.adjust_to_difficulty()
 
     def get_difficulty(self):
         return self.difficulty
@@ -313,6 +317,13 @@ class Thread:
         self.adjust_to_difficulty()
         self.create_thread()
         return self.thread
+
+    def get_thread(self):
+        thread_dict = self.thread
+        thread_list = []
+        for i in thread_dict:
+            thread_list.append(Process(i['name'],i['arrival_time'],i['burst_time'],i['period'],i['deadline']))
+        return thread_list
 
     def draw(self, screen):
         header_color = (68,114,196,255)
@@ -504,24 +515,55 @@ class Image:
         """
         return self.image
 
+class outList:
+    def __init__(self,list,time,performances,x,y,size,color=(255,255,255)):
+        self.list = list
+        self.time = time
+        self.performances = performances
+        self.color = color
+        self.x = x
+        self.y = y
+        self.size = size
+        self.ordered_list = []
+        self.font = pygame.font.Font(None, self.size)  # Initialise la police
+    def transform_list(self):
+        for i in self.list:
+            for j in range(i[2] - i[1]):
+                self.ordered_list.append(i[0])
+    def draw(self,screen):
+        background_color = (207,213,234,255)
+        x_offset = 0
+        for item in self.ordered_list:
+            text_surface = self.font.render(str(item), True, self.color,background_color)
+            screen.blit(text_surface, (self.x + x_offset, self.y))
+            x_offset += self.font.get_linesize()  # Déplace le texte vers le bas pour la ligne suivante
+
+
 
 pygame.font.init()
 font = pygame.font.SysFont("Arial", 20)
-(width, height) = (1200, 800)
+(width, height) = (1000, 800)
 screen = pygame.display.set_mode((width, height))
 t1 = Thread(0, 0, 20, font,(0,0,0))
 t1.set_difficulty(1)
 t2 = t1.create_level()
 t1.draw(screen)
 running = True
-print(t2)
+cpu = Image("element/cpu.png",screen.get_width()/2,screen.get_height()/2,100,100)
+print(t1.get_thread())
+result,time,performances = pro.sjn_scheduling(t1.get_thread())
+print(result)
+L1 = outList(result,time,performances,0,screen.get_height()-200,30,(0,0,0))
+L1.transform_list()
+B1 = Button(screen.get_width()-150,screen.get_height()-100,100,50,(0,0,0),(200,200,200),"Launch",font,(0,0,0),(255,255,255),lambda:print("Launch"))
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
-    screen.fill((0,0,0))
+    screen.fill((255,255,255))
     t1.draw(screen)
+    cpu.draw(screen)
+    L1.draw(screen)
+    B1.draw(screen)
     pygame.display.flip()
-
 pygame.quit()

@@ -13,6 +13,7 @@ class Process:
         self.deadline = deadline
 
 def fcfs_scheduling(processes):
+    print(processes)
     processes.sort(key=lambda x: x.arrival_time)  # sort per arrival
     time = 0
     results = []
