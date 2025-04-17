@@ -13,8 +13,7 @@ class Process:
         self.deadline = deadline
 # pb quand commence pas a 0
 def fcfs_scheduling(processes):
-    processes.sort(key=lambda x: x.arrival_time)
-    ready_queue = []
+    processes.sort(key=lambda x: x.arrival_time)  # sort per arrival
     time = 0
     results = []
     index = 0
