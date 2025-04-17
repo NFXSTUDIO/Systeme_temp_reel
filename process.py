@@ -13,7 +13,8 @@ class Process:
         self.deadline = deadline
 # pb quand commence pas a 0
 def fcfs_scheduling(processes):
-    processes.sort(key=lambda x: x.arrival_time)  # sort per arrival
+    processes.sort(key=lambda x: x.arrival_time)
+    ready_queue = []
     time = 0
     results = []
     index = 0
@@ -21,11 +22,11 @@ def fcfs_scheduling(processes):
 
     while index < len(processes) or ready_queue:
         while index < len(processes) and processes[index].arrival_time <= time:
-            heapq.heappush(ready_queue, (processes[index].arrival_time, processes[index]))
+            heapq.heappush(ready_queue, (processes[index].arrival_time, processes[index].pid, processes[index]))
             index += 1
 
         if ready_queue:
-            _, process = heapq.heappop(ready_queue)
+            _,_, process = heapq.heappop(ready_queue)
             process.waiting_time = time - process.arrival_time
             process.turnaround_time = process.waiting_time + process.burst_time
             total_waiting_time += process.waiting_time
