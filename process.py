@@ -11,7 +11,7 @@ class Process:
         self.turnaround_time = 0            # time between the arrival and the end of the execution
         self.period = period
         self.deadline = deadline
-
+# pb quand commence pas a 0
 def fcfs_scheduling(processes):
     print(processes)
     processes.sort(key=lambda x: x.arrival_time)  # sort per arrival
@@ -217,7 +217,7 @@ def edf_scheduling(processes):
 if __name__ == "__main__":
     # test exemple
     processes = [
-        Process(1, 0, 5),
+        Process(1, 1, 5),
         Process(2, 1, 3),
         Process(3, 2, 8),
     ]
