@@ -13,26 +13,28 @@ class Process:
         self.deadline = deadline
 # pb quand commence pas a 0
 def fcfs_scheduling(processes):
-    processes.sort(key=lambda x: x.arrival_time)  # sort per arrival
+    processes.sort(key=lambda x: x.arrival_time)
+    ready_queue = []
     time = 0
     results = []
+    index = 0
     total_waiting_time = 0
-    start_time = 0
-    
-    processes.sort(key=lambda x: x.arrival_time)
-    
-    for process in processes:
-        if time >= process.arrival_time:
-            start_time = time
-            while process.remaining_time > 0:
-                time += 1
-                process.remaining_time -= 1
-            if process.remaining_time == 0:
-                process.waiting_time = time - process.arrival_time
-                process.turnaround_time = process.waiting_time + process.burst_time
-                total_waiting_time += process.waiting_time
-                results.append((process.pid, start_time, time))
-    
+
+    while index < len(processes) or ready_queue:
+        while index < len(processes) and processes[index].arrival_time <= time:
+            heapq.heappush(ready_queue, (processes[index].arrival_time, processes[index]))
+            index += 1
+
+        if ready_queue:
+            _, process = heapq.heappop(ready_queue)
+            process.waiting_time = time - process.arrival_time
+            process.turnaround_time = process.waiting_time + process.burst_time
+            total_waiting_time += process.waiting_time
+            results.append((process.pid, time, time + process.burst_time))
+            time += process.burst_time
+        else:
+            time = processes[index].arrival_time
+
     performances = total_waiting_time / len(processes)
     return results, time, performances
 
@@ -63,6 +65,7 @@ def sjn_scheduling(processes):
     return results, time, performances
 
 def rr_scheduling(processes, quantum=4):
+    processes.sort(key=lambda x: x.arrival_time)
     time = 0
     results = []
     ready_queue = deque()
@@ -73,7 +76,6 @@ def rr_scheduling(processes, quantum=4):
     for p in processes:
         p.remaining_time = p.burst_time
 
-    processes.sort(key=lambda x: x.arrival_time)
     index = 0
 
     while completed != n:
@@ -113,6 +115,7 @@ def rr_scheduling(processes, quantum=4):
     return results, time, performances
 
 def rm_scheduling(processes): 
+    processes.sort(key=lambda x: x.arrival_time)
     time = 0
     results = []
     ready_queue = []
@@ -170,6 +173,7 @@ def rm_scheduling(processes):
     return results, time, performances
 
 def edf_scheduling(processes):
+    processes.sort(key=lambda x: x.arrival_time)
     time = 0
     results = []
     ready_queue = []
