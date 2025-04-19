@@ -18,27 +18,39 @@ def fcfs_scheduling(processes):
     ready_list = [] # list that contains [pid, start_time, end_time]
     time = 0
     results = []
-    index = 0
     total_waiting_time = 0
+    completed = 0
+    start_time = 0
+    n = len(processes)
+    temp_pid = -1
 
-    while index < len(processes) or ready_queue:
-        while index < len(processes) and processes[index].arrival_time <= time:
-            heapq.heappush(ready_queue, (processes[index].arrival_time, processes[index].pid, processes[index]))
-            ready_list.append([processes[index].pid, time, None])
-            index += 1
-
+    while completed != n:
+        arrived = [p for p in processes if p.arrival_time <= time]
+        for p in arrived:
+            ready_queue.append(p)
+            ready_list.append([p.pid, time, None])
+            processes.remove(p) # remove the process from the list of processes if it's add to the ready queue
+                
         if ready_queue:
-            _,_, process = heapq.heappop(ready_queue)
-            ready_list.append([process.pid, None, time])
-            process.waiting_time = time - process.arrival_time
-            process.turnaround_time = process.waiting_time + process.burst_time
-            total_waiting_time += process.waiting_time
-            results.append([process.pid, time, time + process.burst_time])
-            time += process.burst_time
+            process = ready_queue.pop(0)
+            if process.pid != temp_pid:     # if the previous process is not the same as the current one
+                start_time = time                               # we reset the start time
+            if process.remaining_time == 0: # if the process is finished 
+                process.waiting_time = time - process.arrival_time
+                total_waiting_time += process.waiting_time
+                results.append([process.pid, start_time, time]) # we add it to the results
+                ready_list.append([process.pid, None, time])    # we mark it as finished in the ready queue
+                start_time = 0                                  # reset the start time
+                completed += 1                                  # increment the number of completed processes
+            else:                           # if the process is not finished
+                process.remaining_time -= 1                     # decrement the remaining time
+                ready_queue.insert(0,process)                   # add it back to the ready queue
+                temp_pid = process.pid                          # we save the current process id
+                time += 1                                       # increment the time
         else:
-            time = processes[index].arrival_time
+            time += 1
 
-    performances = total_waiting_time / len(processes)
+    performances = total_waiting_time / n
     return results, time, performances, ready_list
 
 def sjn_scheduling(processes):
@@ -47,27 +59,40 @@ def sjn_scheduling(processes):
     ready_list = [] # list that contains [pid, start_time, end_time]
     time = 0
     results = []
-    index = 0
     total_waiting_time = 0
+    completed = 0
+    start_time = 0
+    n = len(processes)
+    temp_pid = -1
 
-    while index < len(processes) or ready_queue:
-        while index < len(processes) and processes[index].arrival_time <= time:
-            heapq.heappush(ready_queue, (processes[index].burst_time, processes[index]))
-            ready_list.append([processes[index].pid, time, None])
-            index += 1
-
+    while completed != n:
+        arrived = [p for p in processes if p.arrival_time <= time]
+        for p in arrived:
+            ready_queue.append(p)
+            ready_queue.sort(key=lambda x: x.burst_time) # sort the ready queue by remaining time
+            ready_list.append([p.pid, time, None])
+            processes.remove(p) # remove the process from the list of processes if it's add to the ready queue
+                
         if ready_queue:
-            _, process = heapq.heappop(ready_queue)
-            ready_list.append([process.pid, None, time])
-            process.waiting_time = time - process.arrival_time
-            process.turnaround_time = process.waiting_time + process.burst_time
-            total_waiting_time += process.waiting_time
-            results.append([process.pid, time, time + process.burst_time])
-            time += process.burst_time
+            process = ready_queue.pop(0)
+            if process.pid != temp_pid:     # if the previous process is not the same as the current one
+                start_time = time                               # we reset the start time
+            if process.remaining_time == 0: # if the process is finished 
+                process.waiting_time = time - process.arrival_time
+                total_waiting_time += process.waiting_time
+                results.append([process.pid, start_time, time]) # we add it to the results
+                ready_list.append([process.pid, None, time])    # we mark it as finished in the ready queue
+                start_time = 0                                   # increment the time
+                completed += 1                                  # increment the number of completed processes
+            else:                           # if the process is not finished
+                process.remaining_time -= 1                     # decrement the remaining time
+                ready_queue.insert(0,process)                   # add it back to the ready queue
+                temp_pid = process.pid                          # we save the current process id
+                time += 1                                       # increment the time
         else:
-            time = processes[index].arrival_time
+            time += 1
 
-    performances = total_waiting_time / len(processes)
+    performances = total_waiting_time / n
     return results, time, performances, ready_list
 
 def rr_scheduling(processes, quantum=4):
@@ -256,12 +281,22 @@ if __name__ == "__main__":
     print("Ready List:", rd_list)
     print("Average Waiting Time:", fcfs_avg_wait)
 
+    processes = [
+        Process(1, 1, 5),
+        Process(2, 1, 3),
+        Process(3, 2, 8),
+    ]
     print("\nSJN Scheduling:")
     sjn_results,time, sjn_avg_wait, rd_list = sjn_scheduling(processes)
     print(sjn_results)
     print("Ready List:", rd_list)
     print("Average Waiting Time:", sjn_avg_wait)
 
+    processes = [
+        Process(1, 1, 5),
+        Process(2, 1, 3),
+        Process(3, 2, 8),
+    ]
     print("\nRR Scheduling:")
     rr_results, time, rr_avg_wait, rd_list = rr_scheduling(processes)
     print(rr_results)
