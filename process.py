@@ -165,30 +165,29 @@ def rm_scheduling(processes):
     temp_st_time = processes[0].arrival_time
     temp_time = processes[0].arrival_time
     temp_remaining_time = processes[0].remaining_time
+    temp_pro = None
+
     # Initialize the ready queue with the process that arrive at time 0
     for p in processes:
             if (time - p.arrival_time) % p.period == 0 and time >= p.arrival_time:
                 new_instance = Process(p.pid, time, p.burst_time, p.period)
                 heapq.heappush(ready_queue, (new_instance.period, new_instance))
-                ready_list.append([p.pid, time, None])
-    # print(ready_queue)
+                ready_list.append([p.pid, time, None]) # time when the process enter the ready queue
 
-    print("debut traitement : ")
     while time < hyperperiod:
         # Ajouter les réapparitions périodiques
         for p in processes:
             if (time - p.period) % p.period == 0 and time > p.arrival_time:
                 new_instance = Process(p.pid, time, p.burst_time, p.period)
-                #print("time when the process is created",time)
                 heapq.heappush(ready_queue, (new_instance.period, new_instance))
-                ready_list.append([p.pid, time, None])
-        #print(ready_queue)
+                ready_list.append([p.pid, time, None]) # time when the process enter the ready queue again
         if ready_queue:
             _, process = heapq.heappop(ready_queue)
-            ready_list.append([process.pid, None, time])
-            if process.pid != temp_pid and temp_remaining_time > 0: # if the previous process is not the same as the current one we save it in the results
-                results.append([temp_pid, temp_st_time, temp_time])
-                start_time = 0
+            ready_list.append([process.pid, None, time])                # time when the process leave the ready queue     
+            if process.pid != temp_pid and temp_remaining_time > 0: # if the previous process is not the same as the current one
+                ready_list.append([temp_pid, None, temp_time])          # we mark the previous proc as finished in the ready queue
+                results.append([temp_pid, temp_st_time, temp_time])     # we add the previous one to the results
+                start_time = time                                       # set the start time to the actual time
             if start_time == 0:
                 start_time = time
             time += 1
@@ -200,14 +199,12 @@ def rm_scheduling(processes):
                 process.waiting_time = process.turnaround_time - process.burst_time
                 total_waiting_time += process.waiting_time
                 results.append([process.pid, start_time, time])
-                ready_list.append([process.pid, None, time])
                 start_time = 0
             else:
                 temp_pid = process.pid
                 temp_st_time = start_time
                 temp_time = time
                 heapq.heappush(ready_queue, (process.period, process))
-                ready_list.append([process.pid, time, None])
         else:
             time += 1
 
