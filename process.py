@@ -141,8 +141,6 @@ def rr_scheduling(processes, quantum=4):
             else:                           # if the process is not finished
                 process.remaining_time -= 1                     # decrement the remaining time
                 temp_q -= 1
-                print("remaining time :", process.remaining_time)
-                print("quantum :",temp_q,"/ process en cours :", process.pid)
                 ready_queue.insert(0,process)                   # add it back to the ready queue
                 temp_pid = process.pid                          # we save the current process id
                 time += 1                                       # increment the time
