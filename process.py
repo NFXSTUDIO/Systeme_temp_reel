@@ -11,7 +11,7 @@ class Process:
         self.turnaround_time = 0            # time between the arrival and the end of the execution
         self.period = period
         self.deadline = deadline
-# pb quand commence pas a 0
+
 def fcfs_scheduling(processes):
     processes.sort(key=lambda x: x.arrival_time)
     ready_queue = []
@@ -28,18 +28,19 @@ def fcfs_scheduling(processes):
         arrived = [p for p in processes if p.arrival_time <= time]
         for p in arrived:
             ready_queue.append(p)
-            ready_list.append([p.pid, time, None])
+            ready_list.append([p.pid, time, -10])
             processes.remove(p) # remove the process from the list of processes if it's add to the ready queue
-                
         if ready_queue:
-            process = ready_queue.pop(0)
+            process = ready_queue.pop(0)                # take the first process in the ready_queue
+            ready_list.append([process.pid, -10, time]) # add to read_list the process that is currently processing
+            if temp_pid==process.pid:       # if the previous process is the same
+                ready_list.pop()                # we suppress the new instance
             if process.pid != temp_pid:     # if the previous process is not the same as the current one
                 start_time = time                               # we reset the start time
             if process.remaining_time == 0: # if the process is finished 
                 process.waiting_time = time - process.arrival_time
                 total_waiting_time += process.waiting_time
-                results.append([process.pid, start_time, time]) # we add it to the results
-                ready_list.append([process.pid, None, time])    # we mark it as finished in the ready queue
+                results.append([process.pid, start_time, time]) # we add it to the results    
                 start_time = 0                                  # reset the start time
                 completed += 1                                  # increment the number of completed processes
             else:                           # if the process is not finished
@@ -70,18 +71,20 @@ def sjn_scheduling(processes):
         for p in arrived:
             ready_queue.append(p)
             ready_queue.sort(key=lambda x: x.burst_time) # sort the ready queue by remaining time
-            ready_list.append([p.pid, time, None])
+            ready_list.append([p.pid, time, -10])
             processes.remove(p) # remove the process from the list of processes if it's add to the ready queue
                 
         if ready_queue:
             process = ready_queue.pop(0)
+            ready_list.append([process.pid, -10, time]) # add to read_list the process that is currently processing
+            if temp_pid==process.pid:       # if the previous process is the same
+                ready_list.pop()                # we suppress the new instance
             if process.pid != temp_pid:     # if the previous process is not the same as the current one
                 start_time = time                               # we reset the start time
             if process.remaining_time == 0: # if the process is finished 
                 process.waiting_time = time - process.arrival_time
                 total_waiting_time += process.waiting_time
                 results.append([process.pid, start_time, time]) # we add it to the results
-                ready_list.append([process.pid, None, time])    # we mark it as finished in the ready queue
                 start_time = 0                                   # increment the time
                 completed += 1                                  # increment the number of completed processes
             else:                           # if the process is not finished
@@ -97,55 +100,54 @@ def sjn_scheduling(processes):
 
 def rr_scheduling(processes, quantum=4):
     processes.sort(key=lambda x: x.arrival_time)
+    ready_queue = []
+    ready_list = [] # list that contains [pid, start_time, end_time]
     time = 0
     results = []
-    ready_queue = deque()
-    ready_list = [] # list that contains [pid, start_time, end_time]
     total_waiting_time = 0
     completed = 0
+    start_time = 0
     n = len(processes)
-
-    for p in processes:
-        p.remaining_time = p.burst_time
-
-    index = 0
+    temp_pid = -1
+    temp_q = quantum
 
     while completed != n:
-        while index < n and processes[index].arrival_time <= time:
-            ready_queue.append(processes[index])
-            ready_list.append([processes[index].pid, time, None])
-            index += 1
-
-        if not ready_queue:
-            time += 1
-            continue
-
-        process = ready_queue.popleft()
-        ready_list.append([process.pid, None, time])
-        start_time = time
-
-        if process.remaining_time <= quantum:
-            time += process.remaining_time
-            process.remaining_time = 0
-            process.waiting_time = time - process.arrival_time - process.burst_time
-            process.turnaround_time = time - process.arrival_time
-            total_waiting_time += process.waiting_time
-            results.append([process.pid, start_time, time])                
-            completed += 1
+        arrived = [p for p in processes if p.arrival_time <= time]
+        for p in arrived:
+            ready_queue.append(p)
+            ready_queue.sort(key=lambda x: x.arrival_time) # sort the ready queue by remaining time
+            ready_list.append([p.pid, time, -10])
+            processes.remove(p) # remove the process from the list of processes if it's add to the ready queue
+        
+        if ready_queue:
+            process = ready_queue.pop(0)
+            ready_list.append([process.pid, -10, time]) # add to read_list the process that is currently processing
+            if temp_pid==process.pid:       # if the previous process is the same
+                ready_list.pop()                # we suppress the new instance
+            if process.pid != temp_pid:     # if the previous process is not the same as the current one
+                start_time = time                               # we reset the start time
+            if process.remaining_time == 0: # if the process is finished 
+                process.waiting_time = time - process.arrival_time
+                total_waiting_time += process.waiting_time
+                results.append([process.pid, start_time, time]) # we add it to the results
+                start_time = 0  
+                temp_q = quantum                                # increment the time
+                completed += 1                                  # increment the number of completed processes
+            elif temp_q == 0:               # if the quantum is finished
+                process.arrival = time          # set the arrival time to the current time
+                results.append([process.pid, start_time, time])
+                ready_queue.append(process)     # add it at the ready_queue
+                temp_q = quantum
+            else:                           # if the process is not finished
+                process.remaining_time -= 1                     # decrement the remaining time
+                temp_q -= 1
+                print("remaining time :", process.remaining_time)
+                print("quantum :",temp_q,"/ process en cours :", process.pid)
+                ready_queue.insert(0,process)                   # add it back to the ready queue
+                temp_pid = process.pid                          # we save the current process id
+                time += 1                                       # increment the time
         else:
-            time += quantum
-            process.remaining_time -= quantum
-            results.append([process.pid, start_time, time])
-
-        while index < n and processes[index].arrival_time <= time:
-            if processes[index] not in ready_queue and processes[index].remaining_time > 0:
-                ready_queue.append(processes[index])
-                ready_list.append([processes[index].pid, time, None])
-                index += 1
-
-        if process.remaining_time > 0:
-            ready_queue.append(process)
-            ready_list.append([process.pid, time, None])
+            time += 1
 
     performances = total_waiting_time / n
     return results, time, performances, ready_list
@@ -165,14 +167,13 @@ def rm_scheduling(processes):
     temp_st_time = processes[0].arrival_time
     temp_time = processes[0].arrival_time
     temp_remaining_time = processes[0].remaining_time
-    temp_pro = None
 
     # Initialize the ready queue with the process that arrive at time 0
     for p in processes:
             if (time - p.arrival_time) % p.period == 0 and time >= p.arrival_time:
                 new_instance = Process(p.pid, time, p.burst_time, p.period)
                 heapq.heappush(ready_queue, (new_instance.period, new_instance))
-                ready_list.append([p.pid, time, None]) # time when the process enter the ready queue
+                ready_list.append([p.pid, time, -10]) # time when the process enter the ready queue
 
     while time < hyperperiod:
         # Ajouter les réapparitions périodiques
@@ -180,13 +181,19 @@ def rm_scheduling(processes):
             if (time - p.period) % p.period == 0 and time > p.arrival_time:
                 new_instance = Process(p.pid, time, p.burst_time, p.period)
                 heapq.heappush(ready_queue, (new_instance.period, new_instance))
-                ready_list.append([p.pid, time, None]) # time when the process enter the ready queue again
-        if ready_queue:
-            _, process = heapq.heappop(ready_queue)
-            ready_list.append([process.pid, None, time])                # time when the process leave the ready queue     
+                ready_list.append([p.pid, time, -10])                  # time when the process enter the ready queue again
+        if ready_queue:                                             # if there is a process in the ready queue
+            _, process = heapq.heappop(ready_queue)                     # take the process in front of the list
+            ready_list.append([process.pid, -10, time])              # time when the process leave the ready queue     
+            for p in reversed(ready_list):
+                if ready_list[-1][0]==p[0] and ready_list[-1][2]==(p[2]+1):
+                    ready_list.pop()
+                    break        
             if process.pid != temp_pid and temp_remaining_time > 0: # if the previous process is not the same as the current one
-                ready_list.append([temp_pid, None, temp_time])          # we mark the previous proc as finished in the ready queue
-                results.append([temp_pid, temp_st_time, temp_time])     # we add the previous one to the results
+                # print("pid remis : ",[temp_pid, temp_time, -10])
+                ready_list.insert(-1,[temp_pid, temp_time, -10])          # we mark the previous proc as finished in the ready queue
+                # print(ready_list[-2], ready_list[-1])
+                results.append([temp_pid, start_time, time])     # we add the previous one to the results
                 start_time = time                                       # set the start time to the actual time
             if start_time == 0:
                 start_time = time
@@ -194,17 +201,17 @@ def rm_scheduling(processes):
             process.remaining_time -= 1
             temp_remaining_time = process.remaining_time
 
-            if process.remaining_time == 0:
+            if process.remaining_time == 0:                         # if the processus is finished
                 process.turnaround_time = time - process.arrival_time
                 process.waiting_time = process.turnaround_time - process.burst_time
                 total_waiting_time += process.waiting_time
-                results.append([process.pid, start_time, time])
-                start_time = 0
+                results.append([process.pid, start_time, time])         # we add it to the results
+                start_time = 0                                          # reset the start time
             else:
                 temp_pid = process.pid
                 temp_st_time = start_time
                 temp_time = time
-                heapq.heappush(ready_queue, (process.period, process))
+                heapq.heappush(ready_queue, (process.period, process))  
         else:
             time += 1
 
@@ -219,46 +226,62 @@ def edf_scheduling(processes):
     ready_list = [] # list that contains [pid, start_time, end_time]
     total_waiting_time = 0
     start_time = 0
+    
+    hyperperiod = max([p.period for p in processes if p.period]) * 2  # simulation jusqu'à une certaine limite
+    processes.sort(key=lambda x: x.period)  # sort per period
+    temp_pid = processes[0].pid
+    temp_time = processes[0].arrival_time
+    temp_remaining_time = processes[0].remaining_time
 
-    hyperperiod = max([p.deadline for p in processes if p.deadline]) * 2
+    # Initialize the ready queue with the process that arrive at time 0
     for p in processes:
-        if p.arrival_time == 0:
-            new_instance = Process(p.pid, time, p.burst_time, deadline=p.deadline)
-            heapq.heappush(ready_queue, (new_instance.deadline, new_instance))
-            ready_list.append([p.pid, time, None])
+            if (time - p.arrival_time) % p.period == 0 and time >= p.arrival_time:
+                new_instance = Process(p.pid, time, p.burst_time, p.period, p.deadline+time)
+                heapq.heappush(ready_queue, (new_instance.deadline, new_instance))
+                ready_list.append([p.pid, time, -10]) # time when the process enter the ready queue
 
     while time < hyperperiod:
+        # add periodicly the processes
         for p in processes:
-            if time > p.arrival_time and (time - p.arrival_time) % p.period == 0:
-                new_instance = Process(p.pid, time, p.burst_time, deadline=time + p.deadline)
+            if (time - p.period) % p.period == 0 and time > p.arrival_time:
+                new_instance = Process(p.pid, time, p.burst_time, p.period, p.deadline+time)
                 heapq.heappush(ready_queue, (new_instance.deadline, new_instance))
-                ready_list.append([p.pid, time, None])
-
+                ready_list.append([p.pid, time, -10])                  # time when the process enter the ready queue again
         # Remove expired processes
-        for d,p in ready_queue:
-            if time < (p.arrival_time + p.deadline):
-                ready_queue = [(d, p)]
-            else:
-                ready_list.append([p.pid, None, -1]) # minus one for expired process
+        ready_queue = [(d, p) for (d, p) in ready_queue if time < p.deadline]
         heapq.heapify(ready_queue)
 
-        if ready_queue:
-            _, process = heapq.heappop(ready_queue)
+        # if there is a readyqueue
+        if ready_queue:                                             # if there is a process in the ready queue
+            _, process = heapq.heappop(ready_queue)                     # take the process in front of the list
+            ready_list.append([process.pid, -10, time])              # time when the process leave the ready queue     
+            for p in reversed(ready_list):
+                if ready_list[-1][0]==p[0] and ready_list[-1][2]==(p[2]+1):
+                    ready_list.pop()
+                    break 
+            # if the previous process is not the same as the current one       
+            if process.pid != temp_pid and temp_remaining_time > 0: 
+                ready_list.insert(-1,[temp_pid, temp_time, -10])        # we mark the previous proc as finished in the ready queue
+                results.append([temp_pid, start_time, time])     # we add the previous one to the results
+                start_time = time                                       # set the start time to the actual time
+            # if the start time has been reset
             if start_time == 0:
-                start_time = time
+                start_time = time   # set to the current time
+
             time += 1
             process.remaining_time -= 1
-
-            if process.remaining_time == 0:
+            temp_remaining_time = process.remaining_time
+            # if the process is finished
+            if process.remaining_time == 0:                         # if the processus is finished
                 process.turnaround_time = time - process.arrival_time
                 process.waiting_time = process.turnaround_time - process.burst_time
                 total_waiting_time += process.waiting_time
-                results.append([process.pid, start_time, time])
-                ready_list.append([process.pid, None, time])
-                start_time = 0
+                results.append([process.pid, start_time, time])         # we add it to the results
+                start_time = 0                                        # reset the start time    
             else:
-                heapq.heappush(ready_queue, (process.deadline, process))
-                ready_list.append([process.pid, time, None])
+                temp_pid = process.pid
+                temp_time = time
+                heapq.heappush(ready_queue, (process.period, process))  
         else:
             time += 1
 
