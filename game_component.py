@@ -551,10 +551,12 @@ t1.draw(screen)
 running = True
 cpu = Image("element/cpu.png",screen.get_width()/2,screen.get_height()/2,100,100)
 print(t1.get_thread())
-result,time,performances = pro.sjn_scheduling(t1.get_thread())
+result,time,performances,readyList = pro.sjn_scheduling(t1.get_thread())
 print(result)
 L1 = outList(result,time,performances,0,screen.get_height()-200,30,(0,0,0))
+L2 = outList(readyList,time,performances,0,screen.get_height()-100,30,(0,0,0))
 L1.transform_list()
+L2.transform_list()
 B1 = Button(screen.get_width()-150,screen.get_height()-100,100,50,(0,0,0),(200,200,200),"Launch",font,(0,0,0),(255,255,255),lambda:print("Launch"))
 while running:
     for event in pygame.event.get():
@@ -564,6 +566,7 @@ while running:
     t1.draw(screen)
     cpu.draw(screen)
     L1.draw(screen)
+    L2.draw(screen)
     B1.draw(screen)
     pygame.display.flip()
 pygame.quit()
