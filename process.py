@@ -259,13 +259,13 @@ def edf_scheduling(processes):
 
     # time limit
     hyperperiod = np.lcm.reduce([p.period for p in processes if p.period]) # hyperperiod = LCM of all periods
-    
+
     while time < hyperperiod:
         if STOP == False:
             # arrived process                       first apparition                    periodic apparition
             arrived = [p for p in processes if (time == p.arrival_time or (time - p.arrival_time) % p.period == 0)]
             for p in arrived:
-                new_instance = Process(p.pid, time, p.burst_time, p.period) # create a new process
+                new_instance = Process(p.pid, time, p.burst_time, p.period, p.deadline) # create a new process
                 ready_queue.append(new_instance)                            # add it to the ready_queue
                 ready_queue.sort(key=lambda x: x.deadline)                    # sort the list
                 ready_list.append([new_instance.pid, time, -10])            # mark it as arrived
