@@ -38,11 +38,10 @@ class Button:
     def draw(self, screen):
         if self.hover:
             pygame.draw.rect(screen, self.hover_color, self.rect)
-            pygame.draw.rect(screen, self.text_color_hover, self.text_rect)
+            screen.blit(self.text_surface, self.text_rect)
         else:
             pygame.draw.rect(screen, self.color, self.rect)
-            pygame.draw.rect(screen, self.text_color, self.text_rect)
-        screen.blit(self.text_surface, self.text_rect)
+            screen.blit(self.text_surface, self.text_rect)
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -517,6 +516,7 @@ class Image:
 
 class outList:
     def __init__(self,list,time,performances,x,y,size,color=(255,255,255)):
+        self.dict = {}
         self.list = list
         self.time = time
         self.performances = performances
@@ -526,11 +526,23 @@ class outList:
         self.size = size
         self.ordered_list = []
         self.font = pygame.font.Font(None, self.size)  # Initialise la police
+        self.current_time = 0
     def transform_list(self):
         for i in self.list:
             for j in range(i[2] - i[1]):
                 self.ordered_list.append(i[0])
-    def draw(self,screen):
+
+    def convert_list(self):
+        dictionnaire_sortie = self.dict
+        for sous_liste in self.list:
+            cle = sous_liste[0]
+            valeurs = [valeur for valeur in sous_liste[1:] if valeur != -10]
+            if cle not in dictionnaire_sortie:
+                dictionnaire_sortie[cle] = []
+            dictionnaire_sortie[cle].extend(valeurs)
+        self.dict = {k: v for k, v in dictionnaire_sortie.items() if v}
+
+    def draw_order(self,screen):
         background_color = (207,213,234,255)
         x_offset = 0
         for item in self.ordered_list:
@@ -538,11 +550,23 @@ class outList:
             screen.blit(text_surface, (self.x + x_offset, self.y))
             x_offset += self.font.get_linesize()  # Déplace le texte vers le bas pour la ligne suivante
 
+    def draw_dict(self, screen):
+        background_color = (207,213,234,255)
+        x_offset = 0
+        for key, times in self.dict.items():
+            start_time = times[0]
+            end_time = times[1]
 
+            if start_time <= self.current_time <= end_time:
+                text_surface = self.font.render(f"{key}", True, self.color,background_color)
+                screen.blit(text_surface, (self.x+x_offset,self.y))
+                x_offset -= self.font.get_linesize()
+
+        pygame.display.flip()
 
 pygame.font.init()
 font = pygame.font.SysFont("Arial", 20)
-(width, height) = (1000, 800)
+(width, height) = (1000, 400)
 screen = pygame.display.set_mode((width, height))
 t1 = Thread(0, 0, 20, font,(0,0,0))
 t1.set_difficulty(1)
@@ -551,19 +575,27 @@ t1.draw(screen)
 running = True
 cpu = Image("element/cpu.png",screen.get_width()/2,screen.get_height()/2,100,100)
 print(t1.get_thread())
-result,time,performances = pro.sjn_scheduling(t1.get_thread())
-print(result)
-L1 = outList(result,time,performances,0,screen.get_height()-200,30,(0,0,0))
+result,time,performances,readyList = pro.fcfs_scheduling(t1.get_thread())
+print("Result : ",result)
+print("Ready list : ",readyList)
+L1 = outList(result,time,performances,0,screen.get_height()-screen.get_height()/5,30,(0,0,0))
+L2 = outList(readyList,time,performances,100,screen.get_height()-screen.get_height()/1.8,30,(0,0,0))
 L1.transform_list()
-B1 = Button(screen.get_width()-150,screen.get_height()-100,100,50,(0,0,0),(200,200,200),"Launch",font,(0,0,0),(255,255,255),lambda:print("Launch"))
+L2.convert_list()
+B1 = Button(screen.get_width()-105,screen.get_height()-55,100,50,(68,114,196,255),(207,213,234,255),"Launch",font,(0,0,0),(255,255,255),lambda:print("Launch"))
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        B1.handle_event(event)
+
     screen.fill((255,255,255))
     t1.draw(screen)
     cpu.draw(screen)
-    L1.draw(screen)
+    L1.draw_order(screen)
+    L2.draw_dict(screen)
     B1.draw(screen)
     pygame.display.flip()
+    L2.current_time += 1  # Incrémente le temps
+    pygame.time.delay(1000)
 pygame.quit()
