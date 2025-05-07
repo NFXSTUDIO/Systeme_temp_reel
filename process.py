@@ -27,7 +27,9 @@ def fcfs_scheduling(processes):
     while completed != n:
         # arrived process                   first apparition
         arrived = [p for p in processes if p.arrival_time <= time]
+    
         for p in arrived:
+            # print("process :", p.pid, "arrivée à", time)
             ready_queue.append(p)                               # add it to the ready_queue
             ready_list.append([p.pid, time, -10])               # mark it as arrived
             processes.remove(p)                                 # remove the process from the list of processes if it's add to the ready queue
@@ -183,20 +185,24 @@ def rm_scheduling(processes):
     ready_list = [] # list that contains [pid, start_time, end_time]
     total_waiting_time = 0
     start_time = 0
+    STOP = False
 
     # time limit
     hyperperiod = np.lcm.reduce([p.period for p in processes if p.period]) # hyperperiod = LCM of all periods
     
     while time < hyperperiod:
-        # arrived process                       first apparition                    periodic apparition
-        arrived = [p for p in processes if (time == p.arrival_time or (time - p.arrival_time) % p.period == 0)]
-        for p in arrived:
-            print("process :", p.pid, "arrivée à", time)
-            new_instance = Process(p.pid, time, p.burst_time, p.period) # create a new process
-            ready_queue.append(new_instance)                            # add it to the ready_queue
-            ready_queue.sort(key=lambda x: x.period)                    # sort the list
-            ready_list.append([new_instance.pid, time, -10])            # mark it as arrived
-            # print("ready list (arrivée):", ready_list)
+        if STOP == False:
+            # arrived process                       first apparition                    periodic apparition
+            arrived = [p for p in processes if (time == p.arrival_time or (time - p.arrival_time) % p.period == 0)]
+            # print("time",time)
+            for p in arrived:
+                # print("process :", p.pid, "arrivée à", time)
+                new_instance = Process(p.pid, time, p.burst_time, p.period) # create a new process
+                ready_queue.append(new_instance)                            # add it to the ready_queue
+                ready_queue.sort(key=lambda x: x.period)                    # sort the list
+                ready_list.append([new_instance.pid, time, -10])            # mark it as arrived
+            # print("coucou1")
+        STOP = False
         # if there is process in the queue or in the cpu
         if ready_queue != [] or cpu != []:
             
@@ -206,6 +212,7 @@ def rm_scheduling(processes):
                 cpu.append(process.pid)                             # add the process to the cpu
                 ready_list.append([process.pid, -10, time])         # add to read_list the process that is currently processing
                 start_time = time                                   # we reset the start time
+                # print("check cpu")            
 
             # if the process is finished 
             if process.remaining_time == 0: 
@@ -214,20 +221,25 @@ def rm_scheduling(processes):
                 results.append([process.pid, start_time, time]) # we add it to the results
                 cpu.pop()                                       # remove the process from the cpu       
                 start_time = time                               # reset the start time
-            
+                # print("check finish")
+                STOP = True
+
             # if there is a process with a shorter period than the current one
             elif any(p.period < process.period for p in ready_queue):
                 # print("process :", process.pid, " qui est retiré, period :",process.period)
-                results.append([process.pid, start_time, time])         # we add the current one in the results
-                ready_queue.append(process)                             # we add the current one in the ready_queue
+                results.append([process.pid, start_time, time])     # we add the current one in the results
+                ready_queue.append(process)                         # we add the current one in the ready_queue
                 ready_queue.sort(key=lambda x: x.period)                # we sort the list to have the first element with the shortest period
                 ready_list.append([process.pid, -10, time])             # add the process that came back in the ready_queue
                 cpu.pop()                                               # remove the process from the cpu
                 start_time = time                                       # reset the start time
-            
+                # print("check1 inf-period", process.pid)
+                STOP = True
+
             else:
                 process.remaining_time -= 1                             # decrement the remaining time
                 time += 1                                               # increment the time
+                # print("check indent")
         else:
             time += 1                                                   # increment the time
 
@@ -243,22 +255,22 @@ def edf_scheduling(processes):
     ready_list = [] # list that contains [pid, start_time, end_time]
     total_waiting_time = 0
     start_time = 0
-    verified = 0
-    temp_pid = 0
+    STOP = False
 
     # time limit
     hyperperiod = np.lcm.reduce([p.period for p in processes if p.period]) # hyperperiod = LCM of all periods
     
     while time < hyperperiod:
-        # arrived process                       first apparition                    periodic apparition
-        arrived = [p for p in processes if (time == p.arrival_time or (time - p.arrival_time) % p.period == 0)]
-        for p in arrived:
-            new_instance = Process(p.pid, time, p.burst_time, p.period) # create a new process
-            ready_queue.append(new_instance)                            # add it to the ready_queue
-            ready_queue.sort(key=lambda x: x.period)                    # sort the list
-            ready_list.append([new_instance.pid, time, -10])            # mark it as arrived
-            print("ready list (arrivée):", ready_list)
-        
+        if STOP == False:
+            # arrived process                       first apparition                    periodic apparition
+            arrived = [p for p in processes if (time == p.arrival_time or (time - p.arrival_time) % p.period == 0)]
+            for p in arrived:
+                new_instance = Process(p.pid, time, p.burst_time, p.period) # create a new process
+                ready_queue.append(new_instance)                            # add it to the ready_queue
+                ready_queue.sort(key=lambda x: x.deadline)                    # sort the list
+                ready_list.append([new_instance.pid, time, -10])            # mark it as arrived
+                # print("ready list (arrivée):", ready_list)
+        STOP = False
         # if there is process in the queue or in the cpu
         if ready_queue != [] or cpu != []:
             
@@ -283,7 +295,8 @@ def edf_scheduling(processes):
                 results.append([process.pid, start_time, time]) # we add it to the results
                 cpu.pop()                                       # remove the process from the cpu       
                 start_time = time                               # reset the start time
-            
+                STOP = True
+
             # if there is a process with a shorter deadline than the curreznt one
             elif any(p.deadline < process.deadline for p in ready_queue):
                 results.append([process.pid, start_time, time])     # we add the current one in the results
@@ -292,7 +305,8 @@ def edf_scheduling(processes):
                 ready_list.append([process.pid, -10, time])         # add the process that came back in the ready_queue
                 cpu.pop()                                       # remove the process from the cpu
                 start_time = time                               # reset the start time
-                print("ready list (retour):", ready_list)
+                # print("ready list (retour):", ready_list)
+                STOP = True
             
             else:
                 process.remaining_time -= 1                         # decrement the remaining time
@@ -343,20 +357,20 @@ if __name__ == "__main__":
         Process(2, 0, 2, 5),  
         Process(3, 0, 3, 10),  
     ]
-    print("\nRM Scheduling:")
-    rm_results, rm_tt_time, rm_avg_wait, rd_list = rm_scheduling(processes1)
-    print(rm_results)
-    print("Ready List:", rd_list)
-    # print("Time:", rm_tt_time)
-    print("Average Waiting Time:", rm_avg_wait)
+    # print("\nRM Scheduling:")
+    # rm_results, rm_tt_time, rm_avg_wait, rd_list = rm_scheduling(processes1)
+    # print(rm_results)
+    # print("Ready List:", rd_list)
+    # # print("Time:", rm_tt_time)
+    # print("Average Waiting Time:", rm_avg_wait)
 
     processes2 = [
         Process(1, 0, 3, 20, 7),
         Process(2, 0, 2, 5, 4), 
         Process(3, 0, 2, 10, 8), 
     ]
-    # print("\nEDF Scheduling:")
-    # edf_results, time, edf_avg_wait, rd_list = edf_scheduling(processes2)
-    # print(edf_results)
-    # print("Ready List:", rd_list)
-    # print("Average Waiting Time:", edf_avg_wait)
+    print("\nEDF Scheduling:")
+    edf_results, time, edf_avg_wait, rd_list = edf_scheduling(processes2)
+    print(edf_results)
+    print("Ready List:", rd_list)
+    print("Average Waiting Time:", edf_avg_wait)
