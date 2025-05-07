@@ -629,44 +629,51 @@ def draw_algo():
     sjn.draw(screen)
     te1.draw(screen)
 
-pygame.font.init()
-font = pygame.font.SysFont("Arial", 20)
+def handle(event):
+    B1.handle_event(event)
+    B2.handle_event(event)
+    rm.handle_event(event)
+    rr.handle_event(event)
+    edf.handle_event(event)
+    fcfs.handle_event(event)
+    sjn.handle_event(event)
+
+def initialisation():
+    pygame.font.init()
+    font = pygame.font.SysFont("Arial", 20)
+    t1 = Thread(0, 0, 20, font, (0, 0, 0))
+    t1.set_difficulty(1)
+    t2 = t1.create_level()
+    r1 = Rectangle(0, screen.get_height() - screen.get_height() / 1.8 + 20, 300, 10, (68, 114, 196, 255))
+    r2 = Rectangle(screen.get_width() - 215, 0, 215, 320, (200, 200, 200))
+    cpu = Image("element/cpu.png", screen.get_width() / 2, screen.get_height() / 2, 100, 100)
+    te1 = Text(screen.get_width() - 180, 320, "Scheduling algorithm", font, (0, 0, 0))
+    rm = ImageButton(screen.get_width() - 105, 5, "element/RM.png", 100, 100, lambda: print("RM"))
+    rr = ImageButton(screen.get_width() - 210, 5, "element/round-robin.png", 100, 100, lambda: print("RR"))
+    edf = ImageButton(screen.get_width() - 105, 110, "element/EDF.png", 100, 100, lambda: print("EDF"))
+    fcfs = ImageButton(screen.get_width() - 210, 110, "element/FCFS.png", 100, 100, lambda: print("FCFS"))
+    sjn = ImageButton(screen.get_width() - 155, 215, "element/SJN.png", 100, 100, lambda: print("SJN"))
+    result, time_t, performances, readyList = pro.fcfs_scheduling(t1.get_thread())
+    L1 = outList(result, 500, performances, 0, screen.get_height() - screen.get_height() / 5, 30, (0, 0, 0))
+    L2 = outList(readyList, 500, performances, 100, screen.get_height() - screen.get_height() / 1.8, 30, (0, 0, 0))
+    L1.transform_list()
+    L2.convert_list()
+    B1 = Button(screen.get_width() - 105, screen.get_height() - 55, 100, 50, (68, 114, 196, 255), (207, 213, 234, 255),
+                "Launch", font, (0, 0, 0), (255, 255, 255), lambda: print("Launch"))
+    B2 = Button(screen.get_width() - 210, screen.get_height() - 55, 100, 50, (68, 114, 196, 255), (207, 213, 234, 255),
+                "Back", font, (0, 0, 0), (255, 255, 255), lambda: print("Back"))
+    return t1,t2,r1,r2,cpu,te1,rm,rr,edf,fcfs,sjn,L1,L2,B1,B2
+
 (width, height) = (1000, 400)
 screen = pygame.display.set_mode((width, height))
-t1 = Thread(0, 0, 20, font,(0,0,0))
-t1.set_difficulty(1)
-t2 = t1.create_level()
-r1 = Rectangle(0,screen.get_height()-screen.get_height()/1.8+20,300,10,(68,114,196,255))
-r2 = Rectangle(screen.get_width()-215,0,215,320,(200,200,200))
+t1,t2,r1,r2,cpu,te1,rm,rr,edf,fcfs,sjn,L1,L2,B1,B2 = initialisation()
 running = True
-cpu = Image("element/cpu.png",screen.get_width()/2,screen.get_height()/2,100,100)
-te1 = Text(screen.get_width()-180,320,"Scheduling algorithm",font,(0,0,0))
-rm = ImageButton(screen.get_width()-105,5,"element/RM.png",100,100,lambda:print("RM"))
-rr = ImageButton(screen.get_width()-210,5,"element/round-robin.png",100,100,lambda:print("RR"))
-edf = ImageButton(screen.get_width()-105,110,"element/EDF.png",100,100,lambda:print("EDF"))
-fcfs = ImageButton(screen.get_width()-210,110,"element/FCFS.png",100,100,lambda:print("FCFS"))
-sjn = ImageButton(screen.get_width()-155,215,"element/SJN.png",100,100,lambda:print("SJN"))
-print(t1.get_thread())
-result,time_t,performances,readyList = pro.fcfs_scheduling(t1.get_thread())
-print("Result : ",result)
-print("Ready list : ",readyList)
-L1 = outList(result,500,performances,0,screen.get_height()-screen.get_height()/5,30,(0,0,0))
-L2 = outList(readyList,500,performances,100,screen.get_height()-screen.get_height()/1.8,30,(0,0,0))
-L1.transform_list()
-L2.convert_list()
-B1 = Button(screen.get_width()-105,screen.get_height()-55,100,50,(68,114,196,255),(207,213,234,255),"Launch",font,(0,0,0),(255,255,255),lambda:print("Launch"))
-B2 = Button(screen.get_width()-210,screen.get_height()-55,100,50,(68,114,196,255),(207,213,234,255),"Back",font,(0,0,0),(255,255,255),lambda:print("Back"))
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        B1.handle_event(event)
-        B2.handle_event(event)
-        rm.handle_event(event)
-        rr.handle_event(event)
-        edf.handle_event(event)
-        fcfs.handle_event(event)
-        sjn.handle_event(event)
+        handle(event)
 
     screen.fill((255,255,255))
     t1.draw(screen)

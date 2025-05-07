@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="618f0c16-c5e1-48b9-ae1e-509c403f88f5" name="Changes" comment="modified game_component.py">
-      <change afterPath="$PROJECT_DIR$/element/EDF.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/element/FCFS.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/element/RM.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/element/SJN.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/element/round-robin.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+    <list default="true" id="618f0c16-c5e1-48b9-ae1e-509c403f88f5" name="Changes" comment="modified game_component.py everything work !">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/game_component.py" beforeDir="false" afterPath="$PROJECT_DIR$/game_component.py" afterDir="false" />
     </list>
@@ -98,7 +92,7 @@
       <workItem from="1744803604696" duration="17087000" />
       <workItem from="1746465233531" duration="980000" />
       <workItem from="1746600286525" duration="12804000" />
-      <workItem from="1746617543265" duration="985000" />
+      <workItem from="1746617543265" duration="2622000" />
     </task>
     <task id="LOCAL-00001" summary="main">
       <option name="closed" value="true" />
@@ -196,7 +190,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746606153121</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="modified game_component.py everything work !">
+      <option name="closed" value="true" />
+      <created>1746618868410</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1746618868410</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -220,10 +222,11 @@
     <MESSAGE value="test and integration" />
     <MESSAGE value="add game_component.py" />
     <MESSAGE value="modified game_component.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="modified game_component.py" />
+    <MESSAGE value="modified game_component.py everything work !" />
+    <option name="LAST_COMMIT_MESSAGE" value="modified game_component.py everything work !" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Systeme_temp_real$game_component.coverage" NAME="game_component Coverage Results" MODIFIED="1746618533083" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Systeme_temp_real$game_component.coverage" NAME="game_component Coverage Results" MODIFIED="1746620184968" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Systeme_temp_real$test.coverage" NAME="test Coverage Results" MODIFIED="1746617923535" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
