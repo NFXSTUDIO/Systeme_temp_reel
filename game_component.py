@@ -1,5 +1,5 @@
 import pygame
-import time as t
+import time
 import random as rd
 import process as pro
 from process import Process
@@ -87,6 +87,26 @@ class Button:
         self.text_rect = self.text_surface.get_rect(center=self.rect.center)
         print("Done")
 
+class ImageButton:
+    def __init__(self, x, y, file, size_x, size_y, action):
+        self.rect = pygame.Rect(x, y, size_x, size_y)
+        self.image = pygame.image.load(file).convert_alpha()
+        self.image = pygame.transform.scale(self.image, (size_x, size_y))
+        self.action = action
+        self.is_clicked = False
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Clic gauche
+            if self.rect.collidepoint(event.pos):
+                self.is_clicked = True
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            if self.is_clicked and self.rect.collidepoint(event.pos):
+                self.action()  # Exécute l'action associée au bouton
+            self.is_clicked = False
+
 
 class Chronometer:
     """
@@ -122,18 +142,18 @@ class Chronometer:
         self.size = size
 
     def start(self):
-        self._debut = t.time()
+        self._debut = time.time()
 
     def stop(self):
         if self._debut is None:
             raise ValueError("Chronometer has not been started")
-        self._fin = t.time()
+        self._fin = time.time()
 
     def time_up(self):
         if self._debut is None:
             raise ValueError("Chronometer has not been started")
         if self._fin is None:
-            return t.time() - self._debut
+            return time.time() - self._debut
         return self._fin - self._debut
 
     def reset(self):
@@ -459,9 +479,9 @@ class Image:
 
     def draw(self, surface, position=None):  # position est maintenant optionnel
         if position is None:
-            self.rect.topleft = (self.x, self.y)  # Utilise la position de l'objet
+            self.rect.center = (self.x, self.y)  # Utilise la position de l'objet
         else:
-            self.rect.topleft = position  # Utilise la position donnée
+            self.rect.center = position  # Utilise la position donnée
         surface.blit(self.image, self.rect)
 
     def get_width(self):
@@ -515,54 +535,99 @@ class Image:
         return self.image
 
 class outList:
-    def __init__(self,list,time,performances,x,y,size,color=(255,255,255)):
+    def __init__(self, list_data, time_interval, performances, x, y, size, color=(255, 255, 255)):
         self.dict = {}
-        self.list = list
-        self.time = time
+        self.list = list_data
+        self.time = time_interval
         self.performances = performances
         self.color = color
         self.x = x
         self.y = y
         self.size = size
         self.ordered_list = []
-        self.font = pygame.font.Font(None, self.size)  # Initialise la police
+        self.font = pygame.font.Font(None, self.size)  # Initialize the font
         self.current_time = 0
+        self.start_display_time = time.time()
+        self.displayed_index = 0
+
     def transform_list(self):
-        for i in self.list:
-            for j in range(i[2] - i[1]):
-                self.ordered_list.append(i[0])
+        for item in self.list:
+            if len(item) >= 3:
+                label = item[0]
+                start = item[1]
+                end = item[2]
+                for _ in range(end - start):
+                    self.ordered_list.append(label)
+        print(self.ordered_list)
 
     def convert_list(self):
-        dictionnaire_sortie = self.dict
+        dictionnaire_sortie = {}
         for sous_liste in self.list:
-            cle = sous_liste[0]
-            valeurs = [valeur for valeur in sous_liste[1:] if valeur != -10]
-            if cle not in dictionnaire_sortie:
-                dictionnaire_sortie[cle] = []
-            dictionnaire_sortie[cle].extend(valeurs)
+            if sous_liste:
+                cle = sous_liste[0]
+                valeurs = [valeur for valeur in sous_liste[1:] if valeur != -10]
+                if cle not in dictionnaire_sortie:
+                    dictionnaire_sortie[cle] = []
+                dictionnaire_sortie[cle].extend(valeurs)
         self.dict = {k: v for k, v in dictionnaire_sortie.items() if v}
 
-    def draw_order(self,screen):
-        background_color = (207,213,234,255)
+    def draw_order(self, screen):
+        background_color = (207, 213, 234, 255)
         x_offset = 0
-        for item in self.ordered_list:
-            text_surface = self.font.render(str(item), True, self.color,background_color)
-            screen.blit(text_surface, (self.x + x_offset, self.y))
-            x_offset += self.font.get_linesize()  # Déplace le texte vers le bas pour la ligne suivante
+        current_display_time = time.time()
+        elapsed_time = (current_display_time - self.start_display_time) * 1000  # Convert to milliseconds
+
+        items_to_display = int(elapsed_time // self.time)
+
+        for i in range(min(items_to_display, len(self.ordered_list))):
+            item = self.ordered_list[i]
+            text_surface = self.font.render(str(item), True, self.color, background_color)
+            screen.blit(text_surface, (self.x+ x_offset, self.y))
+            x_offset += self.font.get_linesize()
 
     def draw_dict(self, screen):
-        background_color = (207,213,234,255)
+        background_color = (207, 213, 234, 255)
         x_offset = 0
         for key, times in self.dict.items():
-            start_time = times[0]
-            end_time = times[1]
+            if len(times) >= 2:
+                start_time = times[0]
+                end_time = times[1]
 
-            if start_time <= self.current_time <= end_time:
-                text_surface = self.font.render(f"{key}", True, self.color,background_color)
-                screen.blit(text_surface, (self.x+x_offset,self.y))
-                x_offset -= self.font.get_linesize()
+                if start_time <= self.current_time <= end_time:
+                    text_surface = self.font.render(f"{key}", True, self.color, background_color)
+                    screen.blit(text_surface, (self.x+x_offset, self.y))
+                    x_offset += self.font.get_linesize()
 
         pygame.display.flip()
+
+class Rectangle:
+    def __init__(self, x, y, width, height, color=(255,255,255)):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.width = width
+        self.height = height
+        self.color = color
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.rect)
+
+class Text:
+    def __init__(self, x, y, text,font, color=(255,255,255)):
+        self.x= x
+        self.y = y
+        self.text = text
+        self.color = color
+        self.font = font
+    def draw(self, screen):
+        text_surface = self.font.render(self.text, True, self.color)
+        screen.blit(text_surface, (self.x, self.y))
+
+def draw_algo():
+    r2.draw(screen)
+    rm.draw(screen)
+    rr.draw(screen)
+    edf.draw(screen)
+    fcfs.draw(screen)
+    sjn.draw(screen)
+    te1.draw(screen)
 
 pygame.font.init()
 font = pygame.font.SysFont("Arial", 20)
@@ -571,31 +636,48 @@ screen = pygame.display.set_mode((width, height))
 t1 = Thread(0, 0, 20, font,(0,0,0))
 t1.set_difficulty(1)
 t2 = t1.create_level()
-t1.draw(screen)
+r1 = Rectangle(0,screen.get_height()-screen.get_height()/1.8+20,300,10,(68,114,196,255))
+r2 = Rectangle(screen.get_width()-215,0,215,320,(200,200,200))
 running = True
 cpu = Image("element/cpu.png",screen.get_width()/2,screen.get_height()/2,100,100)
+te1 = Text(screen.get_width()-180,320,"Scheduling algorithm",font,(0,0,0))
+rm = ImageButton(screen.get_width()-105,5,"element/RM.png",100,100,lambda:print("RM"))
+rr = ImageButton(screen.get_width()-210,5,"element/round-robin.png",100,100,lambda:print("RR"))
+edf = ImageButton(screen.get_width()-105,110,"element/EDF.png",100,100,lambda:print("EDF"))
+fcfs = ImageButton(screen.get_width()-210,110,"element/FCFS.png",100,100,lambda:print("FCFS"))
+sjn = ImageButton(screen.get_width()-155,215,"element/SJN.png",100,100,lambda:print("SJN"))
 print(t1.get_thread())
-result,time,performances,readyList = pro.fcfs_scheduling(t1.get_thread())
+result,time_t,performances,readyList = pro.fcfs_scheduling(t1.get_thread())
 print("Result : ",result)
 print("Ready list : ",readyList)
-L1 = outList(result,time,performances,0,screen.get_height()-screen.get_height()/5,30,(0,0,0))
-L2 = outList(readyList,time,performances,100,screen.get_height()-screen.get_height()/1.8,30,(0,0,0))
+L1 = outList(result,500,performances,0,screen.get_height()-screen.get_height()/5,30,(0,0,0))
+L2 = outList(readyList,500,performances,100,screen.get_height()-screen.get_height()/1.8,30,(0,0,0))
 L1.transform_list()
 L2.convert_list()
 B1 = Button(screen.get_width()-105,screen.get_height()-55,100,50,(68,114,196,255),(207,213,234,255),"Launch",font,(0,0,0),(255,255,255),lambda:print("Launch"))
+B2 = Button(screen.get_width()-210,screen.get_height()-55,100,50,(68,114,196,255),(207,213,234,255),"Back",font,(0,0,0),(255,255,255),lambda:print("Back"))
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         B1.handle_event(event)
+        B2.handle_event(event)
+        rm.handle_event(event)
+        rr.handle_event(event)
+        edf.handle_event(event)
+        fcfs.handle_event(event)
+        sjn.handle_event(event)
 
     screen.fill((255,255,255))
     t1.draw(screen)
     cpu.draw(screen)
     L1.draw_order(screen)
+    r1.draw(screen)
+    draw_algo()
     L2.draw_dict(screen)
     B1.draw(screen)
+    B2.draw(screen)
     pygame.display.flip()
     L2.current_time += 1  # Incrémente le temps
-    pygame.time.delay(1000)
+    pygame.time.delay(500)
 pygame.quit()
