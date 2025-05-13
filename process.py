@@ -1,4 +1,3 @@
-import time as t
 import numpy as np
 class Process:
     def __init__(self, pid, arrival_time, burst_time, period=None, deadline=None):
@@ -8,8 +7,14 @@ class Process:
         self.remaining_time = burst_time    # time left before the end of execution
         self.waiting_time = 0               # waiting time
         self.turnaround_time = 0            # time between the arrival and the end of the execution
-        self.period = period
-        self.deadline = deadline
+        if period is None:
+            self.period = 3*burst_time # default value
+        else:
+            self.period = period
+        if deadline is None:
+            self.deadline = 2*burst_time
+        else:
+            self.deadline = deadline
 
 def fcfs_scheduling(processes):
     processes.sort(key=lambda x: x.arrival_time)
@@ -45,7 +50,7 @@ def fcfs_scheduling(processes):
                 start_time = time                                   # we reset the start time
 
             # if the process is finished 
-            if process.remaining_time == 0: 
+            if process.remaining_time <= 0: 
                 process.waiting_time = time - process.arrival_time
                 total_waiting_time += process.waiting_time
                 results.append([process.pid, start_time, time]) # we add it to the results
@@ -96,7 +101,7 @@ def sjn_scheduling(processes):
                 start_time = time                               # we reset the start time
             
             # if the process is finished 
-            if process.remaining_time == 0: 
+            if process.remaining_time <= 0: 
                 process.waiting_time = time - process.arrival_time
                 total_waiting_time += process.waiting_time
                 results.append([process.pid, start_time, time]) # we add it to the results
@@ -147,7 +152,7 @@ def rr_scheduling(processes, quantum=4):
                 start_time = time                                   # we reset the start time
 
             # if the process is finished 
-            if process.remaining_time == 0: 
+            if process.remaining_time <= 0: 
                 process.waiting_time = time - process.arrival_time
                 total_waiting_time += process.waiting_time
                 results.append([process.pid, start_time, time]) # we add it to the results
@@ -215,7 +220,7 @@ def rm_scheduling(processes):
                 # print("check cpu")            
 
             # if the process is finished 
-            if process.remaining_time == 0: 
+            if process.remaining_time <= 0: 
                 process.waiting_time = time - process.arrival_time
                 total_waiting_time += process.waiting_time
                 results.append([process.pid, start_time, time]) # we add it to the results
@@ -277,7 +282,7 @@ def edf_scheduling(processes):
             # loop to look for a process 
             for p in ready_queue:
                 # if the process reaches its deadline
-                if p.deadline == time:
+                if p.deadline <= time:
                     ready_queue.remove(p)                           # we erase it
                     ready_list.append([p.pid, -10, time])           # we mark it as leaving the queue
             
@@ -289,7 +294,7 @@ def edf_scheduling(processes):
                 start_time = time                                   # we reset the start time
 
             # if the process is finished 
-            if process.remaining_time == 0: 
+            if process.remaining_time <= 0: 
                 process.waiting_time = time - process.arrival_time
                 total_waiting_time += process.waiting_time
                 results.append([process.pid, start_time, time]) # we add it to the results
