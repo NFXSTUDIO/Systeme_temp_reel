@@ -4,6 +4,8 @@ import random as rd
 import process as pro
 from process import Process
 
+launch = False
+
 
 class Button:
     """
@@ -87,146 +89,33 @@ class Button:
         self.text_rect = self.text_surface.get_rect(center=self.rect.center)
         print("Done")
 
+
 class ImageButton:
-    def __init__(self, x, y, file, size_x, size_y, action):
+    def __init__(self, x, y, file, size_x, size_y,name, action = None):
         self.rect = pygame.Rect(x, y, size_x, size_y)
         self.image = pygame.image.load(file).convert_alpha()
         self.image = pygame.transform.scale(self.image, (size_x, size_y))
         self.action = action
+        self.actif = True
         self.is_clicked = False
+        self.name = name
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Clic gauche
-            if self.rect.collidepoint(event.pos):
-                self.is_clicked = True
-        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-            if self.is_clicked and self.rect.collidepoint(event.pos):
-                self.action()  # Exécute l'action associée au bouton
-            self.is_clicked = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.actif and self.rect.collidepoint(event.pos):
+                if self.action:
+                    self.action()
+                    return True
+        return False
 
+    def activate(self):
+        self.actif = True
 
-class Chronometer:
-    """
-        A Chronometer class for measuring elapsed time and displaying it on a graphical interface.
-
-        Methods:
-            __init__(self, x, y, size, font, couleur=(255, 255, 255)):
-                Initializes a Chronometer instance with specified position, size, font, and color.
-
-            start(self):
-                Starts the chronometer by recording the current time.
-
-            stop(self):
-                Stops the chronometer by recording the current time. Raises an error if the chronometer has not been started.
-
-            time_up(self):
-                Calculates the elapsed time since the chronometer was started. Returns the current elapsed time, or if stopped, the total elapsed time. Raises an error if the chronometer has not been started.
-
-            reset(self):
-                Resets the chronometer by clearing the start and stop times.
-
-            draw(self, screen):
-                Draws the current elapsed time on the specified screen using the provided font and color, starting from the initial position defined during initialization.
-    """
-
-    def __init__(self, x, y, size, font, couleur=(255, 255, 255)):
-        self._debut = None
-        self._fin = None
-        self.x = x
-        self.y = y
-        self.font = font
-        self.couleur = couleur
-        self.size = size
-
-    def start(self):
-        self._debut = time.time()
-
-    def stop(self):
-        if self._debut is None:
-            raise ValueError("Chronometer has not been started")
-        self._fin = time.time()
-
-    def time_up(self):
-        if self._debut is None:
-            raise ValueError("Chronometer has not been started")
-        if self._fin is None:
-            return time.time() - self._debut
-        return self._fin - self._debut
-
-    def reset(self):
-        self._debut = None
-        self._fin = None
-
-    def draw(self, screen):
-        if self._debut is None:
-            text = "0.00"
-        else:
-            text = f"{self.time_up():.2f}"
-        text_surface = self.font.render(text, True, self.couleur)
-        text_rect = text_surface.get_rect(topleft=(self.x, self.y))
-        screen.blit(text_surface, text_rect)
-
-
-class Score:
-    """
-        Class representing a Score system to manage and display scores.
-
-        Methods:
-            __init__(x, y, font, couleur=(255, 255, 255)):
-                Initializes the score system with position, font, color, and initializes score to 0.
-
-            add_score(score):
-                Adds a specified score to the current score.
-
-            subtract_score(score):
-                Subtracts a specified score from the current score, ensuring the score does not go below zero.
-
-            set_score(score):
-                Updates the current score to a specified value.
-
-            get_score():
-                Retrieves the current score value.
-
-            reset():
-                Resets the score to zero.
-
-            draw(screen):
-                Draws the current score as text onto the specified screen using the given font and color.
-    """
-
-    def __init__(self, x, y, font, couleur=(255, 255, 255)):
-        self.x = x
-        self.y = y
-        self.font = font
-        self.couleur = couleur
-        self.score = 0
-
-    def add_score(self, score):
-        self.score += score
-
-    def subtract_score(self, score):
-        self.score -= score
-        if self.score < 0:
-            self.score = 0
-
-    def set_score(self, score):
-        self.score = score
-
-    def get_score(self):
-        return self.score
-
-    def reset(self):
-        self.score = 0
-
-    def draw(self, screen):
-        text = f"{self.score:.2f}"
-        text_surface = self.font.render(text, True, self.couleur)
-        text_rect = text_surface.get_rect(topleft=(self.x, self.y))
-        screen.blit(text_surface, text_rect)
-
+    def deactivate(self):
+        self.actif = False
 
 class Thread:
     """
@@ -297,8 +186,11 @@ class Thread:
                            arrival_time=rd.randint(self.min_arrival_time, self.max_arrival_time),
                            burst_time=burst_time,
                            period=rd.randint(self.min_period, self.max_period),
-                           deadline=2*burst_time )
+                           deadline=2 * burst_time)
             self.thread.append(process)
+
+    def create_custom_thread(self,data):
+        self.thread = data
 
     def adjust_to_difficulty(self):
         if self.difficulty == 1:
@@ -341,27 +233,29 @@ class Thread:
         thread_dict = self.thread
         thread_list = []
         for i in thread_dict:
-            thread_list.append(Process(i['name'],i['arrival_time'],i['burst_time'],i['period'],i['deadline']))
+            thread_list.append(Process(i['name'], i['arrival_time'], i['burst_time'], i['period'], i['deadline']))
         return thread_list
 
     def draw(self, screen):
-        header_color = (68,114,196,255)
-        row_color = (207,213,234,255)
+        header_color = (68, 114, 196, 255)
+        row_color = (207, 213, 234, 255)
         # Dessiner l'en-tête du tableau
-        header_labels = ["Name", "Arrival time", "Burst time", "Period","Deadline"]
+        header_labels = ["Name", "Arrival time", "Burst time", "Period", "Deadline"]
         x_offset = self.x
         padding = 10
-        column_widths = [50, 80, 80, 50,80]
+        column_widths = [50, 80, 80, 50, 80]
         header_height = self.size + 10
 
         # Dessiner le rectangle de l'en-tête
-        pygame.draw.rect(screen, header_color, (self.x, self.y, sum(column_widths) + padding * (len(header_labels) - 1), header_height))
+        pygame.draw.rect(screen, header_color,
+                         (self.x, self.y, sum(column_widths) + padding * (len(header_labels) - 1), header_height))
 
         # Afficher le texte de l'en-tête
         header_text_color = (0, 0, 0)  # Couleur du texte de l'en-tête
         for i, label in enumerate(header_labels):
             text_surface = self.font.render(label, True, header_text_color)
-            text_rect = text_surface.get_rect(topleft=(x_offset + padding // 2, self.y + (header_height - text_surface.get_height()) // 2))
+            text_rect = text_surface.get_rect(
+                topleft=(x_offset + padding // 2, self.y + (header_height - text_surface.get_height()) // 2))
             screen.blit(text_surface, text_rect)
             x_offset += column_widths[i] + padding
 
@@ -369,79 +263,24 @@ class Thread:
         y_offset = self.y + header_height + 5
         for i, process in enumerate(self.thread):
             x_offset = self.x
-            data = [process['name'], str(process['arrival_time']), str(process['burst_time']),str(process['period']),str(process['deadline'])]
+            data = [process['name'], str(process['arrival_time']), str(process['burst_time']), str(process['period']),
+                    str(process['deadline'])]
 
             # Dessiner le fond de la ligne
-            row_rect = pygame.Rect(self.x, y_offset - 2, sum(column_widths) + padding * (len(header_labels) - 1), self.size + 4)
+            row_rect = pygame.Rect(self.x, y_offset - 2, sum(column_widths) + padding * (len(header_labels) - 1),
+                                   self.size + 4)
             pygame.draw.rect(screen, row_color, row_rect)
 
             for j, value in enumerate(data):
                 text_surface = self.font.render(value, True, self.couleur)
-                text_rect = text_surface.get_rect(topleft=(x_offset + padding // 2, y_offset + (self.size - text_surface.get_height()) // 2))
+                text_rect = text_surface.get_rect(
+                    topleft=(x_offset + padding // 2, y_offset + (self.size - text_surface.get_height()) // 2))
                 screen.blit(text_surface, text_rect)
                 x_offset += column_widths[j] + padding
             y_offset += self.size + 5
 
-
-class Block:
-    """
-    Block class represents a graphical object that displays an image and accompanying text.
-
-    Attributes:
-        original_image: Original image loaded from the specified file path.
-        size: Tuple representing the dimensions (width, height) of the block.
-        image: Scaled version of the original image based on the specified size.
-        rect: Rectangle representation of the block for positioning and collision purposes.
-        text: String text displayed on the block.
-        font: Pygame font object used for rendering text.
-        text_color: Tuple representing RGB values of the text color.
-        combined_image: Image object combining the block's scaled image and rendered text.
-
-    Methods:
-        render_text:
-            Renders the associated text onto the image at the center of the block.
-
-        update_text:
-            Updates the text displayed on the block and re-renders it.
-
-        update_size:
-            Updates the block's size, rescales the image, and adjusts its position.
-
-        draw:
-            Draws the block's combined image (image and text) onto a Pygame surface.
-    """
-
-    def __init__(self, x, y, size, font, text, image_path, text_color=(255, 255, 255)):
-        self.original_image = pygame.image.load(image_path).convert_alpha()
-        self.size = size
-        self.image = pygame.transform.scale(self.original_image, size)
-        self.rect = self.image.get_rect(topleft=(x, y))
-        self.text = text
-        self.font = font
-        self.text_color = text_color
-        self.render_text()
-
-    def render_text(self):
-        text_surface = self.font.render(self.text, True, self.text_color)
-        text_rect = text_surface.get_rect(center=self.rect.center)
-        self.combined_image = self.image.copy()
-        self.combined_image.blit(text_surface, text_rect)
-
-    def update_text(self, text):
-        self.text = text
-        self.render_text()
-
-    def update_size(self, size):
-        self.size = size
-        self.image = pygame.transform.scale(self.original_image, size)
-        self.rect = self.image.get_rect(topleft=self.rect.topleft)
-        self.render_text()
-
-    def draw(self, screen):
-        screen.blit(self.combined_image, self.rect)
-
 class Image:
-    def __init__(self,filephath,x,y,size_x,size_y,alpha=None):
+    def __init__(self, filephath, x, y, size_x, size_y, alpha=None):
         self.filepath = filephath
         self.x = x
         self.y = y
@@ -449,7 +288,7 @@ class Image:
         self.size_y = size_y
         self.alpha = alpha
         self.image = self._load_image()
-        self.rect = self.image.get_rect(topleft=(x,y))
+        self.rect = self.image.get_rect(topleft=(x, y))
 
     def _load_image(self):
         try:
@@ -534,6 +373,7 @@ class Image:
         """
         return self.image
 
+
 class outList:
     def __init__(self, list_data, time_interval, performances, x, y, size, color=(255, 255, 255)):
         self.dict = {}
@@ -582,43 +422,125 @@ class outList:
         for i in range(min(items_to_display, len(self.ordered_list))):
             item = self.ordered_list[i]
             text_surface = self.font.render(str(item), True, self.color, background_color)
-            screen.blit(text_surface, (self.x+ x_offset, self.y))
+            screen.blit(text_surface, (self.x + x_offset, self.y))
             x_offset += self.font.get_linesize()
 
     def draw_dict(self, screen):
         background_color = (207, 213, 234, 255)
         x_offset = 0
+
+        # Calculer le temps écoulé depuis le début de l'affichage
+        current_display_time = time.time()
+        elapsed_time = int((current_display_time - self.start_display_time) * 1000 / self.time)
+
         for key, times in self.dict.items():
             if len(times) >= 2:
                 start_time = times[0]
                 end_time = times[1]
 
-                if start_time <= self.current_time <= end_time:
+                # Utiliser le temps écoulé pour déterminer quoi afficher
+                if start_time <= elapsed_time <= end_time:
                     text_surface = self.font.render(f"{key}", True, self.color, background_color)
-                    screen.blit(text_surface, (self.x+x_offset, self.y))
+                    screen.blit(text_surface, (self.x + x_offset, self.y))
                     x_offset += self.font.get_linesize()
 
-        pygame.display.flip()
+        # Si c'est la première fois qu'on appelle draw_dict, initialiser le temps de départ
+        if not hasattr(self, 'start_display_time'):
+            self.start_display_time = time.time()
+
 
 class Rectangle:
-    def __init__(self, x, y, width, height, color=(255,255,255)):
+    def __init__(self, x, y, width, height, color=(255, 255, 255)):
         self.rect = pygame.Rect(x, y, width, height)
         self.width = width
         self.height = height
         self.color = color
+
     def draw(self, screen):
         pygame.draw.rect(screen, self.color, self.rect)
 
+
 class Text:
-    def __init__(self, x, y, text,font, color=(255,255,255)):
-        self.x= x
+    def __init__(self, x, y, text, font, color=(255, 255, 255)):
+        self.x = x
         self.y = y
         self.text = text
         self.color = color
         self.font = font
+
     def draw(self, screen):
         text_surface = self.font.render(self.text, True, self.color)
         screen.blit(text_surface, (self.x, self.y))
+
+class TableauAffichage:
+    def __init__(self, screen, x, y, headers, data, header_color=(68, 114, 196, 255), row_color=(207, 213, 234, 255)):
+        """
+        Initialise la classe TableauAffichage.
+
+        Args:
+            screen: La surface Pygame sur laquelle dessiner le tableau.
+            x: La position x du coin supérieur gauche du tableau.
+            y: La position y du coin supérieur gauche du tableau.
+            headers: Une liste de chaînes de caractères représentant les titres des colonnes.
+            data: Une liste de dictionnaires, où chaque dictionnaire représente une ligne de données
+                  et les clés correspondent aux titres des colonnes.
+            header_color: La couleur RVBA de l'arrière-plan des en-têtes.
+            row_color: La couleur RVBA de l'arrière-plan des lignes de données.
+        """
+        self.screen = screen
+        self.x = x
+        self.y = y
+        self.headers = headers
+        self.data = data
+        self.header_color = header_color
+        self.row_color = row_color
+        self.font = pygame.font.Font(None, 24)  # Vous pouvez choisir une autre police et taille
+
+        self.cell_padding = 5
+        self.column_widths = self._calculate_column_widths()
+        self.row_height = self.font.get_linesize() + 2 * self.cell_padding
+
+    def _calculate_column_widths(self):
+        """
+        Calcule la largeur de chaque colonne en fonction du contenu des en-têtes et des données.
+        """
+        column_widths = [self.font.size(header)[0] + 2 * self.cell_padding for header in self.headers]
+        for row in self.data:
+            for i, header in enumerate(self.headers):
+                cell_width = self.font.size(str(row.get(header, "")))[0] + 2 * self.cell_padding
+                column_widths[i] = max(column_widths[i], cell_width)
+        return column_widths
+
+    def draw(self):
+        """
+        Dessine le tableau sur l'écran.
+        """
+        current_x = self.x
+        current_y = self.y
+
+        # Dessiner les en-têtes
+        for i, header in enumerate(self.headers):
+            header_rect = pygame.Rect(current_x, current_y, self.column_widths[i], self.row_height)
+            pygame.draw.rect(self.screen, self.header_color, header_rect)
+            text_surface = self.font.render(header, True, (0, 0, 0))  # Couleur du texte noir
+            text_rect = text_surface.get_rect(center=header_rect.center)
+            self.screen.blit(text_surface, text_rect)
+            current_x += self.column_widths[i]
+
+        current_y += self.row_height
+        # Dessiner les données
+        for row_data in self.data:
+            current_x = self.x
+            for i, header in enumerate(self.headers):
+                cell_rect = pygame.Rect(current_x, current_y, self.column_widths[i], self.row_height)
+                pygame.draw.rect(self.screen, self.row_color, cell_rect)
+                cell_value = str(row_data.get(header, ""))
+                text_surface = self.font.render(cell_value, True, (0, 0, 0))
+                text_rect = text_surface.get_rect(center=cell_rect.center)
+                self.screen.blit(text_surface, text_rect)
+                current_x += self.column_widths[i]
+            current_y += self.row_height
+
 
 def draw_algo():
     r2.draw(screen)
@@ -629,6 +551,7 @@ def draw_algo():
     sjn.draw(screen)
     te1.draw(screen)
 
+
 def handle(event):
     B1.handle_event(event)
     B2.handle_event(event)
@@ -637,6 +560,7 @@ def handle(event):
     edf.handle_event(event)
     fcfs.handle_event(event)
     sjn.handle_event(event)
+
 
 def initialisation():
     pygame.font.init()
@@ -648,25 +572,163 @@ def initialisation():
     r2 = Rectangle(screen.get_width() - 215, 0, 215, 320, (200, 200, 200))
     cpu = Image("element/cpu.png", screen.get_width() / 2, screen.get_height() / 2, 100, 100)
     te1 = Text(screen.get_width() - 180, 320, "Scheduling algorithm", font, (0, 0, 0))
-    rm = ImageButton(screen.get_width() - 105, 5, "element/RM.png", 100, 100, lambda: print("RM"))
-    rr = ImageButton(screen.get_width() - 210, 5, "element/round-robin.png", 100, 100, lambda: print("RR"))
-    edf = ImageButton(screen.get_width() - 105, 110, "element/EDF.png", 100, 100, lambda: print("EDF"))
-    fcfs = ImageButton(screen.get_width() - 210, 110, "element/FCFS.png", 100, 100, lambda: print("FCFS"))
-    sjn = ImageButton(screen.get_width() - 155, 215, "element/SJN.png", 100, 100, lambda: print("SJN"))
+    rm = ImageButton(screen.get_width() - 105, 5, "element/RM.png", 100, 100,"RM")
+    rr = ImageButton(screen.get_width() - 210, 5, "element/round-robin.png", 100, 100,"RR")
+    edf = ImageButton(screen.get_width() - 105, 110, "element/EDF.png", 100, 100, "EDF")
+    fcfs = ImageButton(screen.get_width() - 210, 110, "element/FCFS.png", 100, 100, "FCFS")
+    sjn = ImageButton(screen.get_width() - 155, 215, "element/SJN.png", 100, 100, "SJN")
+    rm.action = lambda : selectionner_bouton(rm)
+    rr.action = lambda : selectionner_bouton(rr)
+    edf.action = lambda : selectionner_bouton(edf)
+    fcfs.action = lambda : selectionner_bouton(fcfs)
+    sjn.action = lambda : selectionner_bouton(sjn)
     result, time_t, performances, readyList = pro.fcfs_scheduling(t1.get_thread())
     L1 = outList(result, 500, performances, 0, screen.get_height() - screen.get_height() / 5, 30, (0, 0, 0))
     L2 = outList(readyList, 500, performances, 100, screen.get_height() - screen.get_height() / 1.8, 30, (0, 0, 0))
     L1.transform_list()
     L2.convert_list()
     B1 = Button(screen.get_width() - 105, screen.get_height() - 55, 100, 50, (68, 114, 196, 255), (207, 213, 234, 255),
-                "Launch", font, (0, 0, 0), (255, 255, 255), lambda: print("Launch"))
+                "Launch", font, (0, 0, 0), (255, 255, 255), lambda: launch_process())
     B2 = Button(screen.get_width() - 210, screen.get_height() - 55, 100, 50, (68, 114, 196, 255), (207, 213, 234, 255),
                 "Back", font, (0, 0, 0), (255, 255, 255), lambda: print("Back"))
-    return t1,t2,r1,r2,cpu,te1,rm,rr,edf,fcfs,sjn,L1,L2,B1,B2
+    return t1, t2, r1, r2, cpu, te1, rm, rr, edf, fcfs, sjn, L1, L2, B1, B2
+
+
+bouton_selectionne = None
+activated_boutons = []
+
+def gerer_blocage():
+    global bouton_selectionne
+    global activated_boutons
+    if bouton_selectionne:
+        activated_boutons.append(bouton_selectionne.name)
+        for bouton in boutons:
+            if bouton != bouton_selectionne:
+                # Logique basée sur l'image que tu as fournie
+                if bouton_selectionne.name == "RM":
+                    if bouton.name in ["FCFS", "SJN"]:
+                        bouton.deactivate()
+                    else:
+                        bouton.activate()
+                elif bouton_selectionne.name == "RR":
+                    if bouton.name in []:  # Pas de blocage spécifique d'après l'image
+                        bouton.name()
+                    else:
+                        bouton.activate()
+                elif bouton_selectionne.name == "EDF":
+                    if bouton.name in ["FCFS", "SJN"]:
+                        bouton.deactivate()
+                    else:
+                        bouton.activate()
+                elif bouton_selectionne.name == "FCFS":
+                    if bouton.name in ["RM", "EDF"]:
+                        bouton.deactivate()
+                    else:
+                        bouton.activate()
+                elif bouton_selectionne.name == "SJN":
+                    if bouton.name in ["RM", "EDF"]:
+                        bouton.deactivate()
+                    else:
+                        bouton.activate()
+    else:
+        # Si aucun bouton n'est sélectionné, réactiver tous les boutons
+        for bouton in boutons:
+            bouton.activate()
+
+
+# Fonction appelée lorsqu'un bouton est cliqué
+def selectionner_bouton(bouton):
+    global bouton_selectionne
+    bouton_selectionne = bouton
+    gerer_blocage()
+    print(f"Bouton sélectionné : {bouton_selectionne.name}")
+
+def launch_process():
+    global t1,activated_boutons,lr,lrq,launch,tableau
+    results,data = [],[]
+    launch = True
+    for algo in activated_boutons:
+        thread_list = t1.get_thread()  # Obtenir une nouvelle copie des threads
+        if algo == "RM":
+            result, time_interval, performances, ready_list = pro.rm_scheduling(thread_list)
+        elif algo == "RR":
+            result, time_interval, performances, ready_list = pro.rr_scheduling(thread_list)
+        elif algo == "EDF":
+            result, time_interval, performances, ready_list = pro.edf_scheduling(thread_list)
+        elif algo == "FCFS":
+            result, time_interval, performances, ready_list = pro.fcfs_scheduling(thread_list)
+        elif algo == "SJN":
+            result, time_interval, performances, ready_list = pro.sjn_scheduling(thread_list)
+
+        results.append({
+            'algorithm': algo,
+            'result': result,
+            'time_interval': time_interval,
+            'performances': performances,
+            'ready_list': ready_list
+        })
+
+        data.append({
+            'Algorithm': algo,
+            'Time interval': time_interval,
+            'Performances': performances
+        })
+
+        print(data)
+
+        tableau = TableauAffichage(screen, screen.get_width()/2 - 100, 0, ["Algorithm","Time interval","Performances"], data)
+    # Réinitialiser la liste des boutons activés
+    activated_boutons = []
+
+    # Réinitialiser l'état des boutons
+    global bouton_selectionne
+    bouton_selectionne = None
+    for bouton in boutons:
+        bouton.activate()
+    print(results)
+    lr,lrq = create_list_process(results)
+    print(lr)
+    print(lrq)
+
+def create_list_process(results):
+    list_ready_queue,list_result = [],[]
+    offset = 0
+    for result in results:
+        l_result = outList(result['result'], 500, result['performances'], 0, screen.get_height() - screen.get_height() / 5 - offset, 30, (0, 0, 0))
+        l_result.transform_list()
+        list_result.append(l_result)
+        l_rq = outList(result['ready_list'], 500, result['performances'], 100, screen.get_height() - screen.get_height() / 1.8 -offset, 30, (0, 0, 0))
+        l_rq.convert_list()
+        list_ready_queue.append(l_rq)
+        offset += 20
+    return list_result,list_ready_queue
+
+def display_dict(liste):
+    for item in liste:
+        item.draw_dict(screen)
+
+def display_list(liste):
+    for item in liste:
+        item.draw_order(screen)
+
+
+def display_with_delay():
+    """
+    Fonction pour afficher le contenu des listes lr et lrq avec un délai
+    """
+    if 'lr' in globals() and 'lrq' in globals():
+        current_time = 0
+        for l_result, l_queue in zip(lr, lrq):
+            # Mettre à jour le temps courant pour l'affichage du dictionnaire
+            l_queue.current_time = current_time
+            # Afficher les éléments
+            l_result.draw_order(screen)
+            l_queue.draw_dict(screen)
 
 (width, height) = (1000, 400)
 screen = pygame.display.set_mode((width, height))
-t1,t2,r1,r2,cpu,te1,rm,rr,edf,fcfs,sjn,L1,L2,B1,B2 = initialisation()
+t1, t2, r1, r2, cpu, te1, rm, rr, edf, fcfs, sjn, L1, L2, B1, B2 = initialisation()
+boutons = [rm, rr, edf, fcfs, sjn]
 running = True
 
 while running:
@@ -675,16 +737,15 @@ while running:
             running = False
         handle(event)
 
-    screen.fill((255,255,255))
+    screen.fill((255, 255, 255))
     t1.draw(screen)
     cpu.draw(screen)
-    L1.draw_order(screen)
     r1.draw(screen)
     draw_algo()
-    L2.draw_dict(screen)
     B1.draw(screen)
     B2.draw(screen)
+    if launch:
+        display_with_delay()
+        tableau.draw()
     pygame.display.flip()
-    L2.current_time += 1  # Incrémente le temps
-    pygame.time.delay(500)
 pygame.quit()

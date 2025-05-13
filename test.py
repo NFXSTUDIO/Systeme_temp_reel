@@ -1,54 +1,45 @@
 import pygame
-import time
+import sys
 
-def display_list_gradually(data_list, screen_width=800, screen_height=600, background_color=(255, 255, 255), text_color=(0, 0, 0), font_size=36, display_interval_ms=500):
-    """
-    Displays a list of strings on a Pygame screen, adding one element at a time at a specified interval,
-    positioned at the top-left corner.
+# Initialize Pygame
+pygame.init()
 
-    Args:
-        data_list (list): The list of strings to display.
-        screen_width (int): The width of the Pygame screen.
-        screen_height (int): The height of the Pygame screen.
-        background_color (tuple): The RGB color of the background.
-        text_color (tuple): The RGB color of the text.
-        font_size (int): The size of the font.
-        display_interval_ms (int): The interval in milliseconds between adding each element.
-    """
-    pygame.init()
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("Gradual List Display")
-    font = pygame.font.Font(None, font_size)
-    displayed_text = ""
-    start_time = time.time()
-    index = 0
+# Main window settings
+main_window_size = (400, 300)
+main_window = pygame.display.set_mode(main_window_size)
+pygame.display.set_caption("Main Window")
 
-    running = True
-    while running:
-        current_time = time.time()
-        elapsed_time_ms = (current_time - start_time) * 1000
+# Button properties
+button_color = (100, 100, 255)
+button_rect = pygame.Rect(150, 120, 100, 60)
+button_text = pygame.font.Font(None, 32).render("Open", True, (255, 255, 255))
+button_text_rect = button_text.get_rect(center=button_rect.center)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+# Secondary window state
+secondary_window = None
+secondary_window_size = (300, 200)
 
-        screen.fill(background_color)
+# Main game loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if button_rect.collidepoint(event.pos) and secondary_window is None:
+                secondary_window = pygame.display.set_mode(secondary_window_size)
+                pygame.display.set_caption("Secondary Window")
 
-        if index < len(data_list) and elapsed_time_ms >= index * display_interval_ms:
-            displayed_text += data_list[index]
-            index += 1
+    # Draw main window
+    if pygame.display.get_surface() == main_window:
+        main_window.fill((200, 200, 200))
+        pygame.draw.rect(main_window, button_color, button_rect)
+        main_window.blit(button_text, button_text_rect)
+    # Draw secondary window
+    elif pygame.display.get_surface() == secondary_window:
+        secondary_window.fill((150, 150, 150))
 
-        text_surface = font.render(displayed_text, True, text_color)
-        text_rect = text_surface.get_rect(topleft=(0, 0))  # Position at top-left
-        screen.blit(text_surface, text_rect)
+    pygame.display.flip()
 
-        pygame.display.flip()
-
-        # Cap the frame rate
-        pygame.time.Clock().tick(60)
-
-    pygame.quit()
-
-if __name__ == '__main__':
-    my_list = ['L0', 'L0', 'L0', 'L0', 'L0', 'L0', 'L2', 'L2', 'L2', 'L2', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1']
-    display_list_gradually(my_list)
+pygame.quit()
+sys.exit()
