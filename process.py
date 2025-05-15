@@ -2,16 +2,18 @@ import numpy as np
 class Process:
     def __init__(self, pid, arrival_time, burst_time, period=None, deadline=None):
         self.pid = pid                      # id of the process
-        self.arrival_time = arrival_time    # time of the arrival
-        self.burst_time = burst_time        # execution time
-        self.remaining_time = burst_time    # time left before the end of execution
+        self.arrival_time = abs(arrival_time)    # time of the arrival
+        self.burst_time = abs(burst_time)        # execution time
+        self.remaining_time = self.burst_time    # time left before the end of execution
         self.waiting_time = 0               # waiting time
         self.turnaround_time = 0            # time between the arrival and the end of the execution
-        if period is None:
+        
+        if period is None or period <= 0:
             self.period = 3*burst_time # default value
         else:
             self.period = period
-        if deadline is None:
+
+        if deadline is None or deadline <= 0:
             self.deadline = 2*burst_time
         else:
             self.deadline = deadline
