@@ -3,6 +3,9 @@ import time
 import random as rd
 import process as pro
 from process import Process
+import window as wd
+import sys
+import os
 
 launch = False
 
@@ -541,211 +544,644 @@ class TableauAffichage:
                 current_x += self.column_widths[i]
             current_y += self.row_height
 
+class ProcessCreator:
+    """
+    Une classe qui gère la création et l'affichage de processus personnalisés dans une fenêtre Pygame.
+    """
+    def __init__(self):
+        """
+        Initialise Pygame, définit les dimensions de la fenêtre, les couleurs, les polices,
+        la taille du tableau, les en-têtes de colonne, les rectangles des zones de saisie et des boutons,
+        et les variables pour stocker les données et l'état de l'entrée.
+        """
+        pygame.init()
+        self.window_width = 800
+        self.window_height = 600
+        self.screen = pygame.display.set_mode((self.window_width, self.window_height))
+        pygame.display.set_caption("Create custom process")
 
-def draw_algo():
-    r2.draw(screen)
-    rm.draw(screen)
-    rr.draw(screen)
-    edf.draw(screen)
-    fcfs.draw(screen)
-    sjn.draw(screen)
-    te1.draw(screen)
+        self.white = (255, 255, 255)
+        self.black = (0, 0, 0)
+        self.gray = (200, 200, 200)
+        self.green = (0, 255, 0)
 
+        self.font = pygame.font.Font(None, 20)
+        self.title_font = pygame.font.Font(None, 30)
 
-def handle(event):
-    B1.handle_event(event)
-    B2.handle_event(event)
-    rm.handle_event(event)
-    rr.handle_event(event)
-    edf.handle_event(event)
-    fcfs.handle_event(event)
-    sjn.handle_event(event)
+        self.cell_width = 120
+        self.cell_height = 30
+        self.table_x = 50
+        self.table_y = 50
+        self.table_width = self.cell_width * 5
+        self.table_height = self.cell_height * 6
 
+        self.column_headers = ["Name", "Arrival Time", "Burst Time", "Period", "Deadline"]
+        self.process_data = []
 
-def initialisation():
-    pygame.font.init()
-    font = pygame.font.SysFont("Arial", 20)
-    t1 = Thread(0, 0, 20, font, (0, 0, 0))
-    t1.set_difficulty(1)
-    t2 = t1.create_level()
-    r1 = Rectangle(0, screen.get_height() - screen.get_height() / 1.8 + 20, 300, 10, (68, 114, 196, 255))
-    r2 = Rectangle(screen.get_width() - 215, 0, 215, 320, (200, 200, 200))
-    cpu = Image("element/cpu.png", screen.get_width() / 2, screen.get_height() / 2, 100, 100)
-    te1 = Text(screen.get_width() - 180, 320, "Scheduling algorithm", font, (0, 0, 0))
-    rm = ImageButton(screen.get_width() - 105, 5, "element/RM.png", 100, 100,"RM")
-    rr = ImageButton(screen.get_width() - 210, 5, "element/round-robin.png", 100, 100,"RR")
-    edf = ImageButton(screen.get_width() - 105, 110, "element/EDF.png", 100, 100, "EDF")
-    fcfs = ImageButton(screen.get_width() - 210, 110, "element/FCFS.png", 100, 100, "FCFS")
-    sjn = ImageButton(screen.get_width() - 155, 215, "element/SJN.png", 100, 100, "SJN")
-    rm.action = lambda : selectionner_bouton(rm)
-    rr.action = lambda : selectionner_bouton(rr)
-    edf.action = lambda : selectionner_bouton(edf)
-    fcfs.action = lambda : selectionner_bouton(fcfs)
-    sjn.action = lambda : selectionner_bouton(sjn)
-    result, time_t, performances, readyList = pro.fcfs_scheduling(t1.get_thread())
-    L1 = outList(result, 500, performances, 0, screen.get_height() - screen.get_height() / 5, 30, (0, 0, 0))
-    L2 = outList(readyList, 500, performances, 100, screen.get_height() - screen.get_height() / 1.8, 30, (0, 0, 0))
-    L1.transform_list()
-    L2.convert_list()
-    B1 = Button(screen.get_width() - 105, screen.get_height() - 55, 100, 50, (68, 114, 196, 255), (207, 213, 234, 255),
-                "Launch", font, (0, 0, 0), (255, 255, 255), lambda: launch_process())
-    B2 = Button(screen.get_width() - 210, screen.get_height() - 55, 100, 50, (68, 114, 196, 255), (207, 213, 234, 255),
-                "Back", font, (0, 0, 0), (255, 255, 255), lambda: print("Back"))
-    return t1, t2, r1, r2, cpu, te1, rm, rr, edf, fcfs, sjn, L1, L2, B1, B2
+        self.input_rects = [
+            pygame.Rect(50, 400, 100, 30),  # Name
+            pygame.Rect(160, 400, 100, 30),  # Arrival Time
+            pygame.Rect(270, 400, 100, 30),  # Burst Time
+            pygame.Rect(380, 400, 100, 30),  # Period
+            pygame.Rect(490, 400, 100, 30),  # Deadline
+        ]
+        self.button_rect = pygame.Rect(600, 400, 100, 30)
+        self.validate_button_rect = pygame.Rect(600, 440, 100, 30)
 
+        self.input_text = ["", "", "", "", ""]
+        self.active_input = -1
 
-bouton_selectionne = None
-activated_boutons = []
+    def draw_table(self):
+        """
+        Dessine le tableau, y compris les en-têtes et les données.
+        """
+        pygame.draw.rect(self.screen, self.black, (self.table_x, self.table_y, self.table_width, self.table_height), 2)
 
-def gerer_blocage():
-    global bouton_selectionne
-    global activated_boutons
-    if bouton_selectionne:
-        activated_boutons.append(bouton_selectionne.name)
-        for bouton in boutons:
-            if bouton != bouton_selectionne:
-                # Logique basée sur l'image que tu as fournie
-                if bouton_selectionne.name == "RM":
-                    if bouton.name in ["FCFS", "SJN"]:
-                        bouton.deactivate()
+        for i, header in enumerate(self.column_headers):
+            text = self.font.render(header, True, self.black)
+            text_rect = text.get_rect(center=(self.table_x + i * self.cell_width + self.cell_width // 2, self.table_y + self.cell_height // 2))
+            self.screen.blit(text, text_rect)
+            pygame.draw.line(self.screen, self.black, (self.table_x + i * self.cell_width, self.table_y), (self.table_x + i * self.cell_width, self.table_y + self.table_height), 1)
+        pygame.draw.line(self.screen, self.black, (self.table_x + self.table_width, self.table_y), (self.table_x + self.table_width, self.table_y + self.table_height), 1)
+        pygame.draw.line(self.screen, self.black, (self.table_x, self.table_y + self.cell_height), (self.table_x + self.table_width, self.table_y + self.cell_height), 1)
+
+        # Dessine les données des processus
+        for i, row in enumerate(self.process_data):
+            for j, cell_data in enumerate(row.values()):
+                text = self.font.render(str(cell_data), True, self.black)
+                text_rect = text.get_rect(center=(self.table_x + j * self.cell_width + self.cell_width // 2, self.table_y + (i + 1) * self.cell_height + self.cell_height // 2))
+                self.screen.blit(text, text_rect)
+
+    def draw_input_boxes(self):
+        """
+        Dessine les zones de saisie de texte.
+        """
+        for i, rect in enumerate(self.input_rects):
+            if self.active_input == i:
+                pygame.draw.rect(self.screen, self.green, rect, 2)
+            else:
+                pygame.draw.rect(self.screen, self.black, rect, 2)
+            text = self.font.render(self.input_text[i], True, self.black)
+            text_rect = text.get_rect(center=rect.center)
+            self.screen.blit(text, text_rect)
+
+    def draw_buttons(self):
+        """
+        Dessine les boutons.
+        """
+        pygame.draw.rect(self.screen, self.gray, self.button_rect)
+        text = self.font.render("Add Process", True, self.black)
+        text_rect = text.get_rect(center=self.button_rect.center)
+        self.screen.blit(text, text_rect)
+
+        pygame.draw.rect(self.screen, self.gray, self.validate_button_rect)
+        validate_text = self.font.render("Validate", True, self.black)
+        validate_text_rect = validate_text.get_rect(center=self.validate_button_rect.center)
+        self.screen.blit(validate_text, validate_text_rect)
+
+    def add_process(self):
+        """
+        Ajoute les données du processus à la liste.
+        """
+        try:
+            name = self.input_text[0]
+            arrival_time = int(self.input_text[1])
+            burst_time = int(self.input_text[2])
+            period = int(self.input_text[3])
+            deadline = int(self.input_text[4])
+            # Stocke les données du processus sous forme de dictionnaire
+            self.process_data.append({
+                "name": name,
+                "arrival_time": arrival_time,
+                "burst_time": burst_time,
+                "period": period,
+                "deadline": deadline
+            })
+            for i in range(5):
+                self.input_text[i] = ""
+        except ValueError:
+            print("Veuillez entrer des valeurs numériques pour Arrival Time, Burst Time, Period et Deadline.")
+
+    def validate_processes(self):
+        """
+        Valide les processus et affiche les données.
+        """
+        print("Processus validés :")
+        for row in self.process_data:
+            print(f"Name: {row['name']}, Arrival Time: {row['arrival_time']}, Burst Time: {row['burst_time']}, Period: {row['period']}, Deadline: {row['deadline']}")
+
+    def run(self):
+        """
+        Exécute la boucle principale du jeu.
+        """
+        running = True
+        while running:
+            self.screen.fill(self.white)
+            self.draw_table()
+            self.draw_input_boxes()
+            self.draw_buttons()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    for i, rect in enumerate(self.input_rects):
+                        if rect.collidepoint(event.pos):
+                            self.active_input = i
+                            break
                     else:
-                        bouton.activate()
-                elif bouton_selectionne.name == "RR":
-                    if bouton.name in []:  # Pas de blocage spécifique d'après l'image
-                        bouton.name()
-                    else:
-                        bouton.activate()
-                elif bouton_selectionne.name == "EDF":
-                    if bouton.name in ["FCFS", "SJN"]:
-                        bouton.deactivate()
-                    else:
-                        bouton.activate()
-                elif bouton_selectionne.name == "FCFS":
-                    if bouton.name in ["RM", "EDF"]:
-                        bouton.deactivate()
-                    else:
-                        bouton.activate()
-                elif bouton_selectionne.name == "SJN":
-                    if bouton.name in ["RM", "EDF"]:
-                        bouton.deactivate()
-                    else:
-                        bouton.activate()
-    else:
-        # Si aucun bouton n'est sélectionné, réactiver tous les boutons
-        for bouton in boutons:
+                        self.active_input = -1
+                    if self.button_rect.collidepoint(event.pos):
+                        self.add_process()
+                    elif self.validate_button_rect.collidepoint(event.pos):
+                        self.validate_processes()
+                        wd.process_windows_with_custom(self.process_data)
+                elif event.type == pygame.KEYDOWN:
+                    if self.active_input != -1:
+                        if event.key == pygame.K_RETURN:
+                            self.active_input = -1
+                        elif event.key == pygame.K_BACKSPACE:
+                            self.input_text[self.active_input] = self.input_text[self.active_input][:-1]
+                        else:
+                            self.input_text[self.active_input] += event.unicode
+            pygame.display.flip()
+        pygame.quit()
+
+class ProcessClass:
+    def __init__(self):
+        self.rr = None
+        pygame.init()
+        pygame.font.init()
+        self.custom = False
+        self.difficulty = 1
+        self.data = None
+        self.width, self.height = (1000, 400)
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        self.font = pygame.font.SysFont("Arial", 20)
+        self.bouton_selectionne = None
+        self.activated_boutons = []
+        self.launch = False
+        self.lr = []
+        self.lrq = []
+        self.tableau = None
+
+    def initialisation(self):
+        print(self.custom)
+        if self.custom == False :
+            print("Not custom")
+            t1 = Thread(0, 0, 20, self.font, (0, 0, 0))
+            t1.set_difficulty(self.difficulty)
+            t2 = t1.create_level()
+            r1 = Rectangle(0, self.screen.get_height() - self.screen.get_height() / 1.8 + 20, 300, 10, (68, 114, 196, 255))
+            r2 = Rectangle(self.screen.get_width() - 215, 0, 215, 320, (200, 200, 200))
+            cpu = Image("element/cpu.png", self.screen.get_width() / 2, self.screen.get_height() / 2, 100, 100)
+            te1 = Text(self.screen.get_width() - 180, 320, "Scheduling algorithm", self.font, (0, 0, 0))
+            rm = ImageButton(self.screen.get_width() - 105, 5, "element/RM.png", 100, 100,"RM")
+            rr = ImageButton(self.screen.get_width() - 210, 5, "element/round-robin.png", 100, 100,"RR")
+            edf = ImageButton(self.screen.get_width() - 105, 110, "element/EDF.png", 100, 100, "EDF")
+            fcfs = ImageButton(self.screen.get_width() - 210, 110, "element/FCFS.png", 100, 100, "FCFS")
+            sjn = ImageButton(self.screen.get_width() - 155, 215, "element/SJN.png", 100, 100, "SJN")
+            rm.action = lambda : self.selectionner_bouton(rm)
+            rr.action = lambda : self.selectionner_bouton(rr)
+            edf.action = lambda : self.selectionner_bouton(edf)
+            fcfs.action = lambda : self.selectionner_bouton(fcfs)
+            sjn.action = lambda : self.selectionner_bouton(sjn)
+            result, time_t, performances, readyList = pro.fcfs_scheduling(t1.get_thread())
+            L1 = outList(result, 500, performances, 0, self.screen.get_height() - self.screen.get_height() / 5, 30, (0, 0, 0))
+            L2 = outList(readyList, 500, performances, 100, self.screen.get_height() - self.screen.get_height() / 1.8, 30, (0, 0, 0))
+            L1.transform_list()
+            L2.convert_list()
+            B1 = Button(self.screen.get_width() - 105, self.screen.get_height() - 55, 100, 50, (68, 114, 196, 255), (207, 213, 234, 255),
+                        "Launch", self.font, (0, 0, 0), (255, 255, 255), lambda: self.launch_process())
+            B2 = Button(self.screen.get_width() - 210, self.screen.get_height() - 55, 100, 50, (68, 114, 196, 255), (207, 213, 234, 255),
+                        "Back", self.font, (0, 0, 0), (255, 255, 255), lambda:wd.main_window())
+            self.t1, self.t2, self.r1, self.r2, self.cpu, self.te1, self.rm, self.rr, self.edf, self.fcfs, self.sjn, self.L1, self.L2, self.B1, self.B2 = t1, t2, r1, r2, cpu, te1, rm, rr, edf, fcfs, sjn, L1, L2, B1, B2
+            self.boutons = [self.rm, self.rr, self.edf, self.fcfs, self.sjn]
+        elif self.custom == True:
+            print("Custom")
+            t1 = Thread(0, 0, 20, self.font, (0, 0, 0))
+            t1.create_custom_thread(self.data)
+            t2 = t1
+            r1 = Rectangle(0, self.screen.get_height() - self.screen.get_height() / 1.8 + 20, 300, 10,
+                           (68, 114, 196, 255))
+            r2 = Rectangle(self.screen.get_width() - 215, 0, 215, 320, (200, 200, 200))
+            cpu = Image("element/cpu.png", self.screen.get_width() / 2, self.screen.get_height() / 2, 100, 100)
+            te1 = Text(self.screen.get_width() - 180, 320, "Scheduling algorithm", self.font, (0, 0, 0))
+            rm = ImageButton(self.screen.get_width() - 105, 5, "element/RM.png", 100, 100, "RM")
+            rr = ImageButton(self.screen.get_width() - 210, 5, "element/round-robin.png", 100, 100, "RR")
+            edf = ImageButton(self.screen.get_width() - 105, 110, "element/EDF.png", 100, 100, "EDF")
+            fcfs = ImageButton(self.screen.get_width() - 210, 110, "element/FCFS.png", 100, 100, "FCFS")
+            sjn = ImageButton(self.screen.get_width() - 155, 215, "element/SJN.png", 100, 100, "SJN")
+            rm.action = lambda: self.selectionner_bouton(rm)
+            rr.action = lambda: self.selectionner_bouton(rr)
+            edf.action = lambda: self.selectionner_bouton(edf)
+            fcfs.action = lambda: self.selectionner_bouton(fcfs)
+            sjn.action = lambda: self.selectionner_bouton(sjn)
+            result, time_t, performances, readyList = pro.fcfs_scheduling(t1.get_thread())
+            L1 = outList(result, 500, performances, 0, self.screen.get_height() - self.screen.get_height() / 5, 30,
+                         (0, 0, 0))
+            L2 = outList(readyList, 500, performances, 100, self.screen.get_height() - self.screen.get_height() / 1.8,
+                         30, (0, 0, 0))
+            L1.transform_list()
+            L2.convert_list()
+            B1 = Button(self.screen.get_width() - 105, self.screen.get_height() - 55, 100, 50, (68, 114, 196, 255),
+                        (207, 213, 234, 255),
+                        "Launch", self.font, (0, 0, 0), (255, 255, 255), lambda: self.launch_process())
+            B2 = Button(self.screen.get_width() - 210, self.screen.get_height() - 55, 100, 50, (68, 114, 196, 255),
+                        (207, 213, 234, 255),
+                        "Back", self.font, (0, 0, 0), (255, 255, 255), lambda: wd.main_window())
+            self.t1, self.t2, self.r1, self.r2, self.cpu, self.te1, self.rm, self.rr, self.edf, self.fcfs, self.sjn, self.L1, self.L2, self.B1, self.B2 = t1, t2, r1, r2, cpu, te1, rm, rr, edf, fcfs, sjn, L1, L2, B1, B2
+            self.boutons = [self.rm, self.rr, self.edf, self.fcfs, self.sjn]
+
+    def set_difficulty(self, difficulty):
+        self.difficulty = difficulty
+
+    def set_custom(self, custom,data):
+        self.custom = custom
+        self.data = data
+
+    def draw_algo(self):
+        self.r2.draw(self.screen)
+        self.rm.draw(self.screen)
+        self.rr.draw(self.screen)
+        self.edf.draw(self.screen)
+        self.fcfs.draw(self.screen)
+        self.sjn.draw(self.screen)
+        self.te1.draw(self.screen)
+
+    def handle(self, event):
+        self.B1.handle_event(event)
+        self.B2.handle_event(event)
+        self.rm.handle_event(event)
+        self.rr.handle_event(event)
+        self.edf.handle_event(event)
+        self.fcfs.handle_event(event)
+        self.sjn.handle_event(event)
+
+    def gerer_blocage(self):
+        if self.bouton_selectionne:
+            self.activated_boutons.append(self.bouton_selectionne.name)
+            for bouton in self.boutons:
+                if bouton != self.bouton_selectionne:
+                    if self.bouton_selectionne.name == "RM":
+                        if bouton.name in ["FCFS", "SJN"]:
+                            bouton.deactivate()
+                        else:
+                            bouton.activate()
+                    elif self.bouton_selectionne.name == "RR":
+                        bouton.activate() # No specific blocking based on the provided info
+                    elif self.bouton_selectionne.name == "EDF":
+                        if bouton.name in ["FCFS", "SJN"]:
+                            bouton.deactivate()
+                        else:
+                            bouton.activate()
+                    elif self.bouton_selectionne.name == "FCFS":
+                        if bouton.name in ["RM", "EDF"]:
+                            bouton.deactivate()
+                        else:
+                            bouton.activate()
+                    elif self.bouton_selectionne.name == "SJN":
+                        if bouton.name in ["RM", "EDF"]:
+                            bouton.deactivate()
+                        else:
+                            bouton.activate()
+        else:
+            for bouton in self.boutons:
+                bouton.activate()
+
+    def selectionner_bouton(self, bouton):
+        self.bouton_selectionne = bouton
+        self.gerer_blocage()
+        print(f"Bouton sélectionné : {self.bouton_selectionne.name}")
+
+    def launch_process(self):
+        self.launch = True
+        results, data = [], []
+        for algo in self.activated_boutons:
+            thread_list = self.t1.get_thread()
+            if algo == "RM":
+                result, time_interval, performances, ready_list = pro.rm_scheduling(thread_list)
+            elif algo == "RR":
+                result, time_interval, performances, ready_list = pro.rr_scheduling(thread_list)
+            elif algo == "EDF":
+                result, time_interval, performances, ready_list = pro.edf_scheduling(thread_list)
+            elif algo == "FCFS":
+                result, time_interval, performances, ready_list = pro.fcfs_scheduling(thread_list)
+            elif algo == "SJN":
+                result, time_interval, performances, ready_list = pro.sjn_scheduling(thread_list)
+
+            results.append({
+                'algorithm': algo,
+                'result': result,
+                'time_interval': time_interval,
+                'performances': performances,
+                'ready_list': ready_list
+            })
+
+            data.append({
+                'Algorithm': algo,
+                'Time interval': time_interval,
+                'Performances': performances
+            })
+
+            print(data)
+
+        self.tableau = TableauAffichage(self.screen, self.screen.get_width()/2 - 100, 0, ["Algorithm","Time interval","Performances"], data)
+        self.activated_boutons = []
+        self.bouton_selectionne = None
+        for bouton in self.boutons:
             bouton.activate()
+        print(results)
+        self.lr, self.lrq = self.create_list_process(results)
+        print(self.lr)
+        print(self.lrq)
 
+    def create_list_process(self, results):
+        list_ready_queue, list_result = [], []
+        offset = 0
+        for result in results:
+            l_result = outList(result['result'], 500, result['performances'], 0, self.screen.get_height() - self.screen.get_height() / 5 - offset, 30, (0, 0, 0))
+            l_result.transform_list()
+            list_result.append(l_result)
+            l_rq = outList(result['ready_list'], 500, result['performances'], 100, self.screen.get_height() - self.screen.get_height() / 1.8 - offset, 30, (0, 0, 0))
+            l_rq.convert_list()
+            list_ready_queue.append(l_rq)
+            offset += 20
+        return list_result, list_ready_queue
 
-# Fonction appelée lorsqu'un bouton est cliqué
-def selectionner_bouton(bouton):
-    global bouton_selectionne
-    bouton_selectionne = bouton
-    gerer_blocage()
-    print(f"Bouton sélectionné : {bouton_selectionne.name}")
+    def display_dict(self, liste):
+        for item in liste:
+            item.draw_dict(self.screen)
 
-def launch_process():
-    global t1,activated_boutons,lr,lrq,launch,tableau
-    results,data = [],[]
-    launch = True
-    for algo in activated_boutons:
-        thread_list = t1.get_thread()  # Obtenir une nouvelle copie des threads
-        if algo == "RM":
-            result, time_interval, performances, ready_list = pro.rm_scheduling(thread_list)
-        elif algo == "RR":
-            result, time_interval, performances, ready_list = pro.rr_scheduling(thread_list)
-        elif algo == "EDF":
-            result, time_interval, performances, ready_list = pro.edf_scheduling(thread_list)
-        elif algo == "FCFS":
-            result, time_interval, performances, ready_list = pro.fcfs_scheduling(thread_list)
-        elif algo == "SJN":
-            result, time_interval, performances, ready_list = pro.sjn_scheduling(thread_list)
+    def display_list(self, liste):
+        for item in liste:
+            item.draw_order(self.screen)
 
-        results.append({
-            'algorithm': algo,
-            'result': result,
-            'time_interval': time_interval,
-            'performances': performances,
-            'ready_list': ready_list
-        })
+    def display_with_delay(self):
+        if self.lr and self.lrq:
+            current_time = 0
+            for l_result, l_queue in zip(self.lr, self.lrq):
+                l_queue.current_time = current_time
+                l_result.draw_order(self.screen)
+                l_queue.draw_dict(self.screen)
 
-        data.append({
-            'Algorithm': algo,
-            'Time interval': time_interval,
-            'Performances': performances
-        })
+    def run(self):
+        running = True
+        self.initialisation()
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                self.handle(event)
 
-        print(data)
+            self.screen.fill((255, 255, 255))
+            self.t1.draw(self.screen)
+            self.cpu.draw(self.screen)
+            self.r1.draw(self.screen)
+            self.draw_algo()
+            self.B1.draw(self.screen)
+            self.B2.draw(self.screen)
+            if self.launch:
+                self.display_with_delay()
+                if self.tableau:
+                    self.tableau.draw()
+            pygame.display.flip()
+        pygame.quit()
 
-        tableau = TableauAffichage(screen, screen.get_width()/2 - 100, 0, ["Algorithm","Time interval","Performances"], data)
-    # Réinitialiser la liste des boutons activés
-    activated_boutons = []
+class SchedulingMaster:
+    def __init__(self):
+        pygame.init()
 
-    # Réinitialiser l'état des boutons
-    global bouton_selectionne
-    bouton_selectionne = None
-    for bouton in boutons:
-        bouton.activate()
-    print(results)
-    lr,lrq = create_list_process(results)
-    print(lr)
-    print(lrq)
+        # --- Path to images ---
+        self.ASSETS_PATH = os.path.join(os.path.dirname(__file__), "element")
 
-def create_list_process(results):
-    list_ready_queue,list_result = [],[]
-    offset = 0
-    for result in results:
-        l_result = outList(result['result'], 500, result['performances'], 0, screen.get_height() - screen.get_height() / 5 - offset, 30, (0, 0, 0))
-        l_result.transform_list()
-        list_result.append(l_result)
-        l_rq = outList(result['ready_list'], 500, result['performances'], 100, screen.get_height() - screen.get_height() / 1.8 -offset, 30, (0, 0, 0))
-        l_rq.convert_list()
-        list_ready_queue.append(l_rq)
-        offset += 20
-    return list_result,list_ready_queue
+        # --- Colors ---
+        self.BACKGROUND_COLOR = (15, 23, 42)
+        self.BUTTON_COLOR = (30, 64, 175)
+        self.BUTTON_HOVER_COLOR = (37, 99, 235)
+        self.TEXT_COLOR = (255, 255, 255)
+        self.GRAY_BACKGROUND = (100, 100, 100)
+        self.INFO_BG_COLOR = (25, 32, 50)
+        self.HELP_BOX_COLOR = (30, 41, 59)
 
-def display_dict(liste):
-    for item in liste:
-        item.draw_dict(screen)
+        # --- Window ---
+        self.WIDTH, self.HEIGHT = 1000, 650
+        self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+        pygame.display.set_caption("Master of scheduling")
 
-def display_list(liste):
-    for item in liste:
-        item.draw_order(screen)
+        # --- Font ---
+        self.title_font = pygame.font.SysFont("Segoe UI", 56, bold=True)
+        self.button_font = pygame.font.SysFont("Segoe UI", 28)
+        self.info_font = pygame.font.SysFont("Segoe UI", 20)
+        self.help_font = pygame.font.SysFont("Segoe UI", 18)
 
+        # --- Load images ---
+        self.robot_img = pygame.image.load(os.path.join(self.ASSETS_PATH, "robot.png"))
+        self.robot_img = pygame.transform.scale(self.robot_img, (150, 150))
 
-def display_with_delay():
-    """
-    Fonction pour afficher le contenu des listes lr et lrq avec un délai
-    """
-    if 'lr' in globals() and 'lrq' in globals():
-        current_time = 0
-        for l_result, l_queue in zip(lr, lrq):
-            # Mettre à jour le temps courant pour l'affichage du dictionnaire
-            l_queue.current_time = current_time
-            # Afficher les éléments
-            l_result.draw_order(screen)
-            l_queue.draw_dict(screen)
+        self.play_icon = pygame.image.load(os.path.join(self.ASSETS_PATH, "play_icon.png"))
+        self.play_icon = pygame.transform.scale(self.play_icon, (28, 28))
 
-(width, height) = (1000, 400)
-screen = pygame.display.set_mode((width, height))
-t1, t2, r1, r2, cpu, te1, rm, rr, edf, fcfs, sjn, L1, L2, B1, B2 = initialisation()
-boutons = [rm, rr, edf, fcfs, sjn]
-running = True
+        self.settings_icon = pygame.image.load(os.path.join(self.ASSETS_PATH, "settings_icon.png"))
+        self.settings_icon = pygame.transform.scale(self.settings_icon, (28, 28))
 
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        handle(event)
+        self.quit_icon = pygame.image.load(os.path.join(self.ASSETS_PATH, "quit_icon.png"))
+        self.quit_icon = pygame.transform.scale(self.quit_icon, (28, 28))
 
-    screen.fill((255, 255, 255))
-    t1.draw(screen)
-    cpu.draw(screen)
-    r1.draw(screen)
-    draw_algo()
-    B1.draw(screen)
-    B2.draw(screen)
-    if launch:
-        display_with_delay()
-        tableau.draw()
-    pygame.display.flip()
-pygame.quit()
+        # State variables
+        self.clock = pygame.time.Clock()
+        self.running = True
+        self.show_difficulty = False
+        self.show_game = False
+        self.show_info_menu = False
+        self.show_algo_detail = False
+        self.selected_algorithm = None
+
+        # Description of algorithms
+        self.algorithm_descriptions = {
+            "FCFS": "First-Come, First-Served (FCFS) is a simple scheduling algorithm that processes tasks in the order they arrive. It is easy to implement but can lead to long wait times for short tasks if a long task arrives first.",
+            "SJN": "Shortest Job First (SJF) selects the task with the shortest burst time. This non-preemptive algorithm minimizes average waiting time but can starve longer tasks if short ones keep arriving.",
+            "RR": "Round Robin (RR) assigns a fixed time quantum to each task and cycles through them. It's preemptive and fair, especially suited for time-sharing systems.",
+            "RM": "Rate Monotonic (RM) assigns priorities based on task periods: shorter periods mean higher priority. It is optimal for fixed-priority scheduling of periodic tasks.",
+            "EDF": "Earliest Deadline First (EDF) assigns priorities based on deadlines. It is optimal for dynamic-priority scheduling of periodic tasks but can be complex to implement."
+        }
+
+    def draw_button(self, text, icon, x, y, w, h, mouse_pos):
+        button_rect = pygame.Rect(x, y, w, h)
+        color = self.BUTTON_HOVER_COLOR if button_rect.collidepoint(mouse_pos) else self.BUTTON_COLOR
+        pygame.draw.rect(self.screen, color, button_rect, border_radius=12)
+        if icon:
+            self.screen.blit(icon, (x + 10, y + (h - icon.get_height()) // 2))
+        text_surf = self.button_font.render(text, True, self.TEXT_COLOR)
+        if icon:
+            text_rect = text_surf.get_rect(midleft=(x + 55, y + h // 2))
+        else:
+            text_rect = text_surf.get_rect(center=(x + w // 2, y + h // 2))
+        self.screen.blit(text_surf, text_rect)
+        return button_rect
+
+    def draw_difficulty_selection(self):
+        self.screen.fill(self.BACKGROUND_COLOR)
+        title_surf = self.title_font.render("Choose the difficulty", True, self.TEXT_COLOR)
+        self.screen.blit(title_surf, title_surf.get_rect(center=(self.WIDTH // 2, 100)))
+        subtitle_font = pygame.font.SysFont("Segoe UI", 24, italic=True)
+        subtitle_surf = subtitle_font.render("Ready for the challenge? Select your level!", True, self.TEXT_COLOR)
+        subtitle_rect = subtitle_surf.get_rect(center=(self.WIDTH // 2, 150))
+        self.screen.blit(subtitle_surf, subtitle_rect)
+
+        mouse_pos = pygame.mouse.get_pos()
+        buttons = []
+        levels = ["Beginner", "Easy", "Intermediate", "Difficult","Custom"]
+        start_y = 220
+        for i, level in enumerate(levels):
+            btn = pygame.Rect(self.WIDTH // 2 - 130, start_y + i * 90, 260, 60)
+            color = self.BUTTON_HOVER_COLOR if btn.collidepoint(mouse_pos) else self.BUTTON_COLOR
+            pygame.draw.rect(self.screen, color, btn, border_radius=10)
+            text_surf = self.button_font.render(level, True, self.TEXT_COLOR)
+            text_rect = text_surf.get_rect(center=btn.center)
+            self.screen.blit(text_surf, text_rect)
+            buttons.append((btn, level))
+        return buttons
+
+    def draw_info_menu(self):
+        self.screen.fill(self.BACKGROUND_COLOR)
+        title_surf = self.title_font.render("Scheduling Algorithms", True, self.TEXT_COLOR)
+        self.screen.blit(title_surf, title_surf.get_rect(center=(self.WIDTH // 2, 60)))
+        mouse_pos = pygame.mouse.get_pos()
+        buttons = []
+        algos = ["FCFS", "SJN", "RR", "RM", "EDF"]
+        for i, name in enumerate(algos):
+            btn = self.draw_button(name, None, self.WIDTH // 2 - 100, 120 + i * 60, 200, 50, mouse_pos)
+            buttons.append((btn, name))
+
+        # Pedagogical help
+        pygame.draw.rect(self.screen, self.HELP_BOX_COLOR, (100, 450, 800, 150), border_radius=10)
+        help_text = [
+            "Which algorithm should I choose?",
+            "Need simplicity? → FCFS or SJN (non-preemptive)",
+            "Want fairness & preemption? → Round Robin (RR)",
+            "Hard deadlines? → RM or EDF (real-time)",
+            "Static priorities? → RM      "
+            "Dynamic? → EDF"
+        ]
+        for i, line in enumerate(help_text):
+            txt = self.help_font.render(line, True, self.TEXT_COLOR)
+            self.screen.blit(txt, (120, 465 + i * 22))
+
+        # Back button
+        back_btn = self.draw_button("Back", None, 40, self.HEIGHT - 60, 100, 40, mouse_pos)
+        return buttons, back_btn
+
+    def wrap_text(self, text, font, max_width):
+        words = text.split(' ')
+        lines = []
+        current_line = ''
+        for word in words:
+            test_line = current_line + word + ' '
+            if font.size(test_line)[0] < max_width:
+                current_line = test_line
+            else:
+                lines.append(current_line)
+                current_line = word + ' '
+        lines.append(current_line)
+        return lines
+
+    def draw_algo_detail(self, algo_name):
+        self.screen.fill(self.INFO_BG_COLOR)
+        title_surf = self.title_font.render(algo_name + " Algorithm", True, self.TEXT_COLOR)
+        self.screen.blit(title_surf, title_surf.get_rect(topleft=(40, 30)))
+
+        pygame.draw.rect(self.screen, self.BACKGROUND_COLOR, (40, 120, 920, 480), border_radius=12)
+        description = self.algorithm_descriptions.get(algo_name, "Description coming soon...")
+        wrapped_text = self.wrap_text(description, self.info_font, 880)
+
+        for i, line in enumerate(wrapped_text):
+            text_surf = self.info_font.render(line, True, self.TEXT_COLOR)
+            self.screen.blit(text_surf, (60, 140 + i * 28))
+
+        mouse_pos = pygame.mouse.get_pos()
+        return self.draw_button("Back", None, 40, self.HEIGHT - 60, 100, 40, mouse_pos)
+
+    def run(self):
+        while self.running:
+            mouse_pos = pygame.mouse.get_pos()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.show_algo_detail:
+                        back_btn = self.draw_algo_detail(self.selected_algorithm)
+                        if back_btn.collidepoint(event.pos):
+                            self.show_algo_detail = False
+                            self.show_info_menu = True
+                    elif self.show_info_menu:
+                        algo_buttons, back_btn = self.draw_info_menu()
+                        for btn, name in algo_buttons:
+                            if btn.collidepoint(event.pos):
+                                self.selected_algorithm = name
+                                self.show_info_menu = False
+                                self.show_algo_detail = True
+                        if back_btn.collidepoint(event.pos):
+                            self.show_info_menu = False
+                    elif self.show_difficulty:
+                        difficulty_buttons = self.draw_difficulty_selection()
+                        for btn, level in difficulty_buttons:
+                            if btn.collidepoint(event.pos):
+                                print(f"Difficulty chosen: {level}")
+                                if level == "Beginner":
+                                    wd.process_window_with_difficulty(1)
+                                    self.show_difficulty = False
+                                    self.show_game = True
+                                elif level == "Easy":
+                                    wd.process_window_with_difficulty(2)
+                                    self.show_difficulty = False
+                                    self.show_game = True
+                                elif level == "Intermediate":
+                                    wd.process_window_with_difficulty(3)
+                                    self.show_difficulty = False
+                                    self.show_game = True
+                                elif level == "Difficult":
+                                    wd.process_window_with_difficulty(4)
+                                    self.show_difficulty = False
+                                    self.show_game = True
+                                elif level == "Custom":
+                                    wd.custom_process_window()
+                                    self.show_difficulty = False
+                                    self.show_game = True
+                    else:
+                        if not self.show_game:
+                            play_button = self.draw_button("Play", self.play_icon, 370, 320, 260, 60, mouse_pos)
+                            algo_button = self.draw_button("Informations about all algorithms", self.settings_icon, 270, 410, 460, 60, mouse_pos)
+                            quit_button = self.draw_button("Exit", self.quit_icon, 370, 500, 260, 60, mouse_pos)
+
+                            if play_button.collidepoint(event.pos):
+                                self.show_difficulty = True
+                            elif algo_button.collidepoint(event.pos):
+                                self.show_info_menu = True
+                            elif quit_button.collidepoint(event.pos):
+                                self.running = False
+
+            if self.show_algo_detail:
+                self.draw_algo_detail(self.selected_algorithm)
+            elif self.show_info_menu:
+                algo_buttons, back_btn = self.draw_info_menu()
+            elif self.show_game:
+                self.screen.fill(self.GRAY_BACKGROUND)
+            elif self.show_difficulty:
+                difficulty_buttons = self.draw_difficulty_selection()
+            else:
+                self.screen.fill(self.BACKGROUND_COLOR)
+                title_surf = self.title_font.render("Maître de l'Ordonnancement", True, self.TEXT_COLOR)
+                title_rect = title_surf.get_rect(center=(self.WIDTH // 2, 80))
+                self.screen.blit(title_surf, title_rect)
+                self.screen.blit(self.robot_img, (self.WIDTH // 2 - self.robot_img.get_width() // 2, 150))
+                play_button = self.draw_button("Play", self.play_icon, 370, 320, 260, 60, mouse_pos)
+                algo_button = self.draw_button("Informations about all algorithms", self.settings_icon, 270, 410, 460, 60, mouse_pos)
+                quit_button = self.draw_button("Exit", self.quit_icon, 370, 500, 260, 60, mouse_pos)
+
+            pygame.display.flip()
+            self.clock.tick(60)
+
+        pygame.quit()
+        sys.exit()
