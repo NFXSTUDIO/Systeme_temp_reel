@@ -943,6 +943,111 @@ class ProcessClass:
             pygame.display.flip()
         pygame.quit()
 
+class Help:
+    """
+    Help class represents a graphical object that displays a window with scrollable text to help users understand the application.
+
+    Attributes:
+        rect: Rectangle representing the position and size of the help window.
+        font: Pygame font object used for rendering text.
+        text: List of strings representing the lines of text to be displayed.
+        bg_color: Background color of the help window.
+        text_color: Color of the text displayed in the help window.
+        scroll_y: Current vertical scroll position.
+        line_height: Height of each line of text.
+        visible_lines: Number of lines that can be displayed within the window's height.
+        dragging: Boolean indicating if the scrollbar is being dragged.
+        scrollbar_width: Width of the scrollbar.    
+    
+    Methods:
+        handle_event(event):
+            Handles mouse events for scrolling and dragging the scrollbar.
+
+        get_scrollbar_height():
+            Calculates the height of the scrollbar based on the number of lines and window height.
+
+        get_scrollbar_rect():
+            Returns the rectangle representing the scrollbar's position and size.
+
+        draw(screen):
+            Draws the help window, text, and scrollbar on the specified Pygame surface.    
+    
+    """
+    def __init__(self, x, y, width, height, font, text, bg_color=(240,240,240), text_color=(0,0,0)):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.font = font
+        self.text = text.split('\n')
+        self.bg_color = bg_color
+        self.text_color = text_color
+        self.scroll_y = 0
+        self.line_height = self.font.get_linesize()
+        self.visible_lines = height // self.line_height
+        self.dragging = False
+        self.scrollbar_width = 15
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.get_scrollbar_rect().collidepoint(event.pos):
+                self.dragging = True
+                self.mouse_y_start = event.pos[1]
+                self.scroll_y_start = self.scroll_y
+        elif event.type == pygame.MOUSEBUTTONUP:
+            self.dragging = False
+        elif event.type == pygame.MOUSEMOTION and self.dragging:
+            delta = event.pos[1] - self.mouse_y_start
+            max_scroll = max(0, len(self.text) - self.visible_lines)
+            scroll_pixels = self.rect.height - self.get_scrollbar_height()
+            if scroll_pixels > 0:
+                self.scroll_y = int(self.scroll_y_start + delta * max_scroll / scroll_pixels)
+                self.scroll_y = max(0, min(self.scroll_y, max_scroll))
+        elif event.type == pygame.MOUSEWHEEL:
+            max_scroll = max(0, len(self.text) - self.visible_lines)
+            self.scroll_y -= event.y
+            self.scroll_y = max(0, min(self.scroll_y, max_scroll))
+
+    def get_scrollbar_height(self):
+        total_lines = len(self.text)
+        if total_lines <= self.visible_lines:
+            return self.rect.height
+        return max(20, int(self.rect.height * self.visible_lines / total_lines))
+
+    def get_scrollbar_rect(self):
+        bar_height = self.get_scrollbar_height()
+        max_scroll = max(0, len(self.text) - self.visible_lines)
+        if max_scroll == 0:
+            bar_y = self.rect.y
+        else:
+            bar_y = self.rect.y + int((self.scroll_y / max_scroll) * (self.rect.height - bar_height))
+        return pygame.Rect(self.rect.right - self.scrollbar_width, bar_y, self.scrollbar_width, bar_height)
+
+    def draw(self, screen):
+        # Draw background
+        pygame.draw.rect(screen, self.bg_color, self.rect)
+        # Draw text
+        start = self.scroll_y
+        end = min(len(self.text), start + self.visible_lines)
+        for i, line in enumerate(self.text[start:end]):
+            text_surface = self.font.render(line, True, self.text_color)
+            screen.blit(text_surface, (self.rect.x + 5, self.rect.y + i * self.line_height))
+        # Draw scrollbar
+        pygame.draw.rect(screen, (200,200,200), (self.rect.right - self.scrollbar_width, self.rect.y, self.scrollbar_width, self.rect.height))
+        pygame.draw.rect(screen, (120,120,120), self.get_scrollbar_rect())
+
+"""Au cas ou"""
+# Exemple d'utilisation :
+# help_text = """Bienvenue dans l'interface !
+# - Cliquez sur les boutons pour choisir un algorithme.
+# - Les processus sont affichés dans le tableau.
+# - Lancez la simulation avec 'Launch'.
+# - Utilisez la barre pour faire défiler ce texte si besoin.
+# """
+# help_window = Help(100, 50, 400, 300, pygame.font.SysFont("Arial", 20), help_text)
+# Dans la boucle principale :
+# help_window.handle_event(event)
+# help_window.draw(screen)
+
+
+
 class SchedulingMaster:
     def __init__(self):
         pygame.init()
