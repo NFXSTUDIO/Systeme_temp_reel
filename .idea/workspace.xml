@@ -4,16 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="618f0c16-c5e1-48b9-ae1e-509c403f88f5" name="Changes" comment="optimised game_component.py">
-      <change afterPath="$PROJECT_DIR$/element/play_icon.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/element/quit_icon.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/element/robot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/element/settings_icon.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/window.py" afterDir="false" />
+    <list default="true" id="618f0c16-c5e1-48b9-ae1e-509c403f88f5" name="Changes" comment="finish implementation">
+      <change afterPath="$PROJECT_DIR$/element/help_icon.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/game_component.py" beforeDir="false" afterPath="$PROJECT_DIR$/game_component.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,6 +72,32 @@
       <recent name="C:\Users\arthu\PycharmProjects\Systeme_temp_real\element" />
     </key>
   </component>
+  <component name="RunManager">
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="Systeme_temp_real" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.12 (Systeme_temp_real)" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\arthu\PycharmProjects\Systeme_temp_real" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -112,6 +132,8 @@
       <workItem from="1747238122547" duration="6000" />
       <workItem from="1747573228370" duration="2343000" />
       <workItem from="1747582028872" duration="4285000" />
+      <workItem from="1747586392847" duration="1344000" />
+      <workItem from="1747588928665" duration="351000" />
     </task>
     <task id="LOCAL-00001" summary="main">
       <option name="closed" value="true" />
@@ -233,7 +255,23 @@
       <option name="project" value="LOCAL" />
       <updated>1747153911029</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="finish implementation">
+      <option name="closed" value="true" />
+      <created>1747586416191</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1747586416192</updated>
+    </task>
+    <task id="LOCAL-00017" summary="finish implementation">
+      <option name="closed" value="true" />
+      <created>1747586430621</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1747586430621</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -259,12 +297,13 @@
     <MESSAGE value="modified game_component.py" />
     <MESSAGE value="modified game_component.py everything work !" />
     <MESSAGE value="optimised game_component.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="optimised game_component.py" />
+    <MESSAGE value="finish implementation" />
+    <option name="LAST_COMMIT_MESSAGE" value="finish implementation" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Systeme_temp_real$game_component.coverage" NAME="game_component Coverage Results" MODIFIED="1747585447603" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Systeme_temp_real$window.coverage" NAME="window Coverage Results" MODIFIED="1747585451669" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Systeme_temp_real$test.coverage" NAME="test Coverage Results" MODIFIED="1747584788652" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Systeme_temp_real$main.coverage" NAME="main Coverage Results" MODIFIED="1747585871034" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Systeme_temp_real$main.coverage" NAME="main Coverage Results" MODIFIED="1747586598952" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="C:\Users\arthu\PycharmProjects\Systeme_temp_real" />
   </component>
 </project>

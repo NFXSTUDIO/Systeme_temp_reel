@@ -9,7 +9,6 @@ import os
 
 launch = False
 
-
 class Button:
     """
     Button class provides functionality for creating interactive buttons in a Pygame application. It supports rendering buttons with customized styles, handling mouse events, and performing actions.
@@ -91,7 +90,6 @@ class Button:
         self.text_surface = self.font.render(self.text, True, self.text_color)
         self.text_rect = self.text_surface.get_rect(center=self.rect.center)
         print("Done")
-
 
 class ImageButton:
     def __init__(self, x, y, file, size_x, size_y,name, action = None):
@@ -376,7 +374,6 @@ class Image:
         """
         return self.image
 
-
 class outList:
     def __init__(self, list_data, time_interval, performances, x, y, size, color=(255, 255, 255)):
         self.dict = {}
@@ -451,7 +448,6 @@ class outList:
         if not hasattr(self, 'start_display_time'):
             self.start_display_time = time.time()
 
-
 class Rectangle:
     def __init__(self, x, y, width, height, color=(255, 255, 255)):
         self.rect = pygame.Rect(x, y, width, height)
@@ -461,7 +457,6 @@ class Rectangle:
 
     def draw(self, screen):
         pygame.draw.rect(screen, self.color, self.rect)
-
 
 class Text:
     def __init__(self, x, y, text, font, color=(255, 255, 255)):
@@ -982,6 +977,9 @@ class SchedulingMaster:
         self.play_icon = pygame.image.load(os.path.join(self.ASSETS_PATH, "play_icon.png"))
         self.play_icon = pygame.transform.scale(self.play_icon, (28, 28))
 
+        self.help_icon = pygame.image.load(os.path.join(self.ASSETS_PATH, "help_icon.png"))
+        self.help_icon = pygame.transform.scale(self.help_icon, (28, 28))
+
         self.settings_icon = pygame.image.load(os.path.join(self.ASSETS_PATH, "settings_icon.png"))
         self.settings_icon = pygame.transform.scale(self.settings_icon, (28, 28))
 
@@ -992,6 +990,7 @@ class SchedulingMaster:
         self.clock = pygame.time.Clock()
         self.running = True
         self.show_difficulty = False
+        self.show_help_menu = False
         self.show_game = False
         self.show_info_menu = False
         self.show_algo_detail = False
@@ -1061,7 +1060,7 @@ class SchedulingMaster:
             "Need simplicity? → FCFS or SJN (non-preemptive)",
             "Want fairness & preemption? → Round Robin (RR)",
             "Hard deadlines? → RM or EDF (real-time)",
-            "Static priorities? → RM      "
+            "Static priorities? → RM      ",
             "Dynamic? → EDF"
         ]
         for i, line in enumerate(help_text):
@@ -1153,12 +1152,15 @@ class SchedulingMaster:
                         if not self.show_game:
                             play_button = self.draw_button("Play", self.play_icon, 370, 320, 260, 60, mouse_pos)
                             algo_button = self.draw_button("Informations about all algorithms", self.settings_icon, 270, 410, 460, 60, mouse_pos)
-                            quit_button = self.draw_button("Exit", self.quit_icon, 370, 500, 260, 60, mouse_pos)
+                            help_button = self.draw_button("Help",self.help_icon,370,500,260,60,mouse_pos)
+                            quit_button = self.draw_button("Exit", self.quit_icon, 370, 590, 260, 60, mouse_pos)
 
                             if play_button.collidepoint(event.pos):
                                 self.show_difficulty = True
                             elif algo_button.collidepoint(event.pos):
                                 self.show_info_menu = True
+                            elif help_button.collidepoint(event.pos):
+                                self.show_help_menu = True
                             elif quit_button.collidepoint(event.pos):
                                 self.running = False
 
@@ -1166,6 +1168,9 @@ class SchedulingMaster:
                 self.draw_algo_detail(self.selected_algorithm)
             elif self.show_info_menu:
                 algo_buttons, back_btn = self.draw_info_menu()
+            elif self.show_help_menu:
+                print("Help menu")
+                self.show_help_menu = False
             elif self.show_game:
                 self.screen.fill(self.GRAY_BACKGROUND)
             elif self.show_difficulty:
@@ -1178,7 +1183,8 @@ class SchedulingMaster:
                 self.screen.blit(self.robot_img, (self.WIDTH // 2 - self.robot_img.get_width() // 2, 150))
                 play_button = self.draw_button("Play", self.play_icon, 370, 320, 260, 60, mouse_pos)
                 algo_button = self.draw_button("Informations about all algorithms", self.settings_icon, 270, 410, 460, 60, mouse_pos)
-                quit_button = self.draw_button("Exit", self.quit_icon, 370, 500, 260, 60, mouse_pos)
+                help_button = self.draw_button("Help",self.help_icon,370,500,260,60,mouse_pos)
+                quit_button = self.draw_button("Exit", self.quit_icon, 370, 590, 260, 60, mouse_pos)
 
             pygame.display.flip()
             self.clock.tick(60)
