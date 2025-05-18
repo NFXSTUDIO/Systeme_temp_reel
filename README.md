@@ -32,7 +32,7 @@ Pour installer et exécuter ce projet, veuillez suivre les étapes suivantes :
     Assurez-vous d'avoir Python installé sur votre système. Ensuite, clonez le dépôt et installez les librairies nécessaires à l'aide de pip. Un fichier `requirements.txt` est généralement fourni pour lister ces dépendances.
 
     ```bash
-    git clone [https://github.com/NFXSTUDIO/Systeme_temp_reel](https://github.com/NFXSTUDIO/Systeme_temp_ree)
+    git clone [https://github.com/NFXSTUDIO/Systeme_temp_reel](https://github.com/NFXSTUDIO/Systeme_temp_reel)
     cd votre-repo
     pip install -r requirements.txt
     ```
