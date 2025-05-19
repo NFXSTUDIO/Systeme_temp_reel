@@ -946,9 +946,11 @@ class ProcessClass:
 class Help:
     """
     Help class represents a graphical object that displays a window with scrollable text to help users understand the application.
+    It now manages its own Pygame window with default dimensions.
 
     Attributes:
-        rect: Rectangle representing the position and size of the help window.
+        width: Width of the help window (default: 600).
+        height: Height of the help window (default: 400).
         font: Pygame font object used for rendering text.
         text: List of strings representing the lines of text to be displayed.
         bg_color: Background color of the help window.
@@ -957,11 +959,16 @@ class Help:
         line_height: Height of each line of text.
         visible_lines: Number of lines that can be displayed within the window's height.
         dragging: Boolean indicating if the scrollbar is being dragged.
-        scrollbar_width: Width of the scrollbar.    
-    
+        scrollbar_width: Width of the scrollbar.
+        screen: Pygame display surface for the help window.
+        rect: Rectangle representing the position and size of the help window (relative to its own screen).
+
     Methods:
+        run():
+            Initializes and runs the Pygame event loop for the help window.
+
         handle_event(event):
-            Handles mouse events for scrolling and dragging the scrollbar.
+            Handles Pygame events, specifically mouse events for scrolling and dragging the scrollbar.
 
         get_scrollbar_height():
             Calculates the height of the scrollbar based on the number of lines and window height.
@@ -969,21 +976,42 @@ class Help:
         get_scrollbar_rect():
             Returns the rectangle representing the scrollbar's position and size.
 
-        draw(screen):
-            Draws the help window, text, and scrollbar on the specified Pygame surface.    
-    
+        draw():
+            Draws the help window, text, and scrollbar on its own Pygame surface.
     """
-    def __init__(self, x, y, width, height, font, text, bg_color=(240,240,240), text_color=(0,0,0)):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.font = font
+    def __init__(self, width=600, height=400, font=None, text=""):
+        pygame.init()
+        self.width = width
+        self.height = height
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("Help")
+        self.rect = self.screen.get_rect()
+        if font is None:
+            self.font = pygame.font.Font(None, 30)
+        else:
+            self.font = font
         self.text = text.split('\n')
-        self.bg_color = bg_color
-        self.text_color = text_color
+        self.bg_color = (240, 240, 240)
+        self.text_color = (0, 0, 0)
         self.scroll_y = 0
         self.line_height = self.font.get_linesize()
         self.visible_lines = height // self.line_height
         self.dragging = False
         self.scrollbar_width = 15
+        self.mouse_y_start = 0
+        self.scroll_y_start = 0
+        self.running = False
+
+    def run(self):
+        self.running = True
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                self.handle_event(event)
+            self.draw()
+            pygame.display.flip()
+        pygame.quit()
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -1020,33 +1048,18 @@ class Help:
             bar_y = self.rect.y + int((self.scroll_y / max_scroll) * (self.rect.height - bar_height))
         return pygame.Rect(self.rect.right - self.scrollbar_width, bar_y, self.scrollbar_width, bar_height)
 
-    def draw(self, screen):
+    def draw(self):
         # Draw background
-        pygame.draw.rect(screen, self.bg_color, self.rect)
+        self.screen.fill(self.bg_color)
         # Draw text
         start = self.scroll_y
         end = min(len(self.text), start + self.visible_lines)
         for i, line in enumerate(self.text[start:end]):
             text_surface = self.font.render(line, True, self.text_color)
-            screen.blit(text_surface, (self.rect.x + 5, self.rect.y + i * self.line_height))
+            self.screen.blit(text_surface, (self.rect.x + 5, self.rect.y + i * self.line_height))
         # Draw scrollbar
-        pygame.draw.rect(screen, (200,200,200), (self.rect.right - self.scrollbar_width, self.rect.y, self.scrollbar_width, self.rect.height))
-        pygame.draw.rect(screen, (120,120,120), self.get_scrollbar_rect())
-
-"""Au cas ou"""
-# Exemple d'utilisation :
-# help_text = """Bienvenue dans l'interface !
-# - Cliquez sur les boutons pour choisir un algorithme.
-# - Les processus sont affichés dans le tableau.
-# - Lancez la simulation avec 'Launch'.
-# - Utilisez la barre pour faire défiler ce texte si besoin.
-# """
-# help_window = Help(100, 50, 400, 300, pygame.font.SysFont("Arial", 20), help_text)
-# Dans la boucle principale :
-# help_window.handle_event(event)
-# help_window.draw(screen)
-
-
+        pygame.draw.rect(self.screen, (200,200,200), (self.rect.right - self.scrollbar_width, self.rect.y, self.scrollbar_width, self.rect.height))
+        pygame.draw.rect(self.screen, (120,120,120), self.get_scrollbar_rect())
 
 class SchedulingMaster:
     def __init__(self):
@@ -1274,7 +1287,7 @@ class SchedulingMaster:
             elif self.show_info_menu:
                 algo_buttons, back_btn = self.draw_info_menu()
             elif self.show_help_menu:
-                print("Help menu")
+                wd.help_window()
                 self.show_help_menu = False
             elif self.show_game:
                 self.screen.fill(self.GRAY_BACKGROUND)

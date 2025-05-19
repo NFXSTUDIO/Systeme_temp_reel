@@ -14,6 +14,10 @@ def process_windows_with_custom(data):
     process_creator.set_custom(True,data)
     process_creator.run()
 
+def help_window():
+    help = gc.Help()
+    help.run()
+
 def main_window():
     game = gc.SchedulingMaster()
     game.run()
